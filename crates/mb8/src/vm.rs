@@ -33,9 +33,10 @@ impl VirtualMachine {
     pub fn execute(&mut self, instruction: &Opcode) {
         match instruction {
             Opcode::Nop => self.nop(),
+            Opcode::Halt => self.halt(),
             Opcode::Mov { dst, src } => self.mov(*dst, *src),
             Opcode::Add { dst, src } => self.add(*dst, *src),
-            Opcode::Halt => self.halt(),
+            Opcode::Sub { dst, src } => self.sub(*dst, *src),
         }
     }
 

@@ -1,5 +1,8 @@
 //! Register definitions for the MB8 VM.
 
+/// Overflow flag for the flag register
+pub const OVERFLOW_FLAG: u8 = 0b0000_0001;
+
 /// List of registers supported by the MB8 VM.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Register {

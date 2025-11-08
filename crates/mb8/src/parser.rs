@@ -25,7 +25,14 @@ pub fn parse(instruction: u16) -> Option<Opcode> {
     let b = (instruction & B_MASK) >> 4;
     let c = instruction & C_MASK;
     match opcode {
-        0x0 => Some(Opcode::Nop),
+        0x0 => {
+            // Control instructions
+            match a {
+                0x0 => Some(Opcode::Nop),
+                0x1 => Some(Opcode::Halt),
+                _ => None,
+            }
+        }
         0x1 => {
             // Group of reg-reg instructions
             match a {
@@ -37,10 +44,13 @@ pub fn parse(instruction: u16) -> Option<Opcode> {
                     dst: parse_register(b)?,
                     src: parse_register(c)?,
                 }),
+                0x2 => Some(Opcode::Sub {
+                    dst: parse_register(b)?,
+                    src: parse_register(c)?,
+                }),
                 _ => None,
             }
         }
-        0xF => Some(Opcode::Halt),
         _ => None,
     }
 }
@@ -74,6 +84,11 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_halt() {
+        assert_eq!(parse(0x0100), Some(Opcode::Halt));
+    }
+
+    #[test]
     fn test_parse_mov() {
         assert_eq!(
             parse(0x1001),
@@ -96,7 +111,13 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_halt() {
-        assert_eq!(parse(0xF000), Some(Opcode::Halt));
+    fn test_parse_sub() {
+        assert_eq!(
+            parse(0x1201),
+            Some(Opcode::Sub {
+                dst: Register::R0,
+                src: Register::R1,
+            })
+        );
     }
 }

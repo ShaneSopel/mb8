@@ -6,12 +6,17 @@ use crate::registers::Register;
 /// Full list of MB8 opcodes used in VM.
 #[derive(Debug, PartialEq)]
 pub enum Opcode {
+    /* Control group */
     /// No operation. Instruction does nothing.
     Nop,
+    /// Halt the VM.
+    Halt,
+
+    /* reg-reg opcodes */
     /// Move value from one register to another.
     Mov { dst: Register, src: Register },
     /// Add `dst` and `src1` and store the result in `dst`.
     Add { dst: Register, src: Register },
-    /// Halt the VM.
-    Halt,
+    /// Subtract `src` from `dst` and store the result in `dst`.
+    Sub { dst: Register, src: Register },
 }
