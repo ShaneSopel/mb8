@@ -1,16 +1,26 @@
-use mb8_isa::registers::{Register, OVERFLOW_FLAG};
+use mb8_isa::registers::{flags, Register};
 
 use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
     pub fn sub(&mut self, dst: Register, src: Register) {
-        let a = u8::try_from(self.registers.read(dst)).unwrap_or_default();
-        let b = u8::try_from(self.registers.read(src)).unwrap_or_default();
+        let a = self.registers.read(dst) as u8;
+        let b = self.registers.read(src) as u8;
         let (result, overflow) = a.overflowing_sub(b);
-        self.registers.write(dst, u16::from(result));
-        if overflow {
-            self.registers.write(Register::F, u16::from(OVERFLOW_FLAG));
+
+        let mut f_register = 0;
+        if result == 0 {
+            f_register |= flags::Z_FLAG;
         }
+        if overflow {
+            f_register |= flags::C_FLAG;
+        }
+        if (result & 0x80) != 0 {
+            f_register |= flags::N_FLAG;
+        }
+
+        self.registers.write(dst, result as u16);
+        self.registers.write(Register::F, f_register as u16);
     }
 }
 
@@ -34,6 +44,36 @@ mod tests {
     }
 
     #[test]
+    fn test_opcode_sub_clear_flags() {
+        // VM clear the flags register before executing SUB instruction
+        let mut vm = VirtualMachine::new();
+        vm.registers.write(Register::F, 0xFF);
+        vm.registers.write(Register::R0, 2);
+        vm.registers.write(Register::R1, 1);
+        vm.execute(&Opcode::Sub {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::R1), 1);
+        assert_eq!(vm.registers.read(Register::F), 0);
+    }
+
+    #[test]
+    fn test_opcode_sub_zero() {
+        // VM clear the flags register before executing SUB instruction
+        let mut vm = VirtualMachine::new();
+        vm.registers.write(Register::F, 0xFF);
+        vm.registers.write(Register::R0, 1);
+        vm.registers.write(Register::R1, 1);
+        vm.execute(&Opcode::Sub {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::R0), 0);
+        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG as u16);
+    }
+
+    #[test]
     fn test_opcode_sub_overflow() {
         // VM handles subtraction overflow by wrapping around and setting the carry flag
         let mut vm = VirtualMachine::new();
@@ -44,6 +84,9 @@ mod tests {
             src: Register::R1,
         });
         assert_eq!(vm.registers.read(Register::R0), 255);
-        assert_eq!(vm.registers.read(Register::F), 1);
+        assert_eq!(
+            vm.registers.read(Register::F),
+            (flags::N_FLAG | flags::C_FLAG) as u16
+        );
     }
 }

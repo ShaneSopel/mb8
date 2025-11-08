@@ -56,7 +56,7 @@ pub fn parse(instruction: u16) -> Option<Opcode> {
         }
         0x2 => Some(Opcode::Ldi {
             dst: parse_register(a)?,
-            value: u8::try_from(b << 4 | c).ok()?,
+            value: (b << 4 | c) as u8,
         }),
         _ => None,
     }

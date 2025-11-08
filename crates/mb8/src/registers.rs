@@ -20,34 +20,34 @@ impl Registers {
     /// Write a value to a register.
     pub fn write(&mut self, register: Register, value: u16) {
         match register {
-            Register::R0 => self.general_purpose[0] = u8::try_from(value).unwrap_or(0),
-            Register::R1 => self.general_purpose[1] = u8::try_from(value).unwrap_or(0),
-            Register::R2 => self.general_purpose[2] = u8::try_from(value).unwrap_or(0),
-            Register::R3 => self.general_purpose[3] = u8::try_from(value).unwrap_or(0),
-            Register::R4 => self.general_purpose[4] = u8::try_from(value).unwrap_or(0),
-            Register::R5 => self.general_purpose[5] = u8::try_from(value).unwrap_or(0),
-            Register::R6 => self.general_purpose[6] = u8::try_from(value).unwrap_or(0),
-            Register::R7 => self.general_purpose[7] = u8::try_from(value).unwrap_or(0),
-            Register::F => self.flag = u8::try_from(value).unwrap_or(0),
+            Register::R0 => self.general_purpose[0] = value as u8,
+            Register::R1 => self.general_purpose[1] = value as u8,
+            Register::R2 => self.general_purpose[2] = value as u8,
+            Register::R3 => self.general_purpose[3] = value as u8,
+            Register::R4 => self.general_purpose[4] = value as u8,
+            Register::R5 => self.general_purpose[5] = value as u8,
+            Register::R6 => self.general_purpose[6] = value as u8,
+            Register::R7 => self.general_purpose[7] = value as u8,
+            Register::F => self.flag = value as u8,
             Register::PC => self.program_counter = value,
-            Register::SP => self.stack_pointer = u8::try_from(value).unwrap_or(0),
+            Register::SP => self.stack_pointer = value as u8,
         }
     }
 
     /// Read a value from a register.
     pub fn read(&self, register: Register) -> u16 {
         match register {
-            Register::R0 => u16::from(self.general_purpose[0]),
-            Register::R1 => u16::from(self.general_purpose[1]),
-            Register::R2 => u16::from(self.general_purpose[2]),
-            Register::R3 => u16::from(self.general_purpose[3]),
-            Register::R4 => u16::from(self.general_purpose[4]),
-            Register::R5 => u16::from(self.general_purpose[5]),
-            Register::R6 => u16::from(self.general_purpose[6]),
-            Register::R7 => u16::from(self.general_purpose[7]),
-            Register::F => u16::from(self.flag),
+            Register::R0 => self.general_purpose[0] as u16,
+            Register::R1 => self.general_purpose[1] as u16,
+            Register::R2 => self.general_purpose[2] as u16,
+            Register::R3 => self.general_purpose[3] as u16,
+            Register::R4 => self.general_purpose[4] as u16,
+            Register::R5 => self.general_purpose[5] as u16,
+            Register::R6 => self.general_purpose[6] as u16,
+            Register::R7 => self.general_purpose[7] as u16,
+            Register::F => self.flag as u16,
             Register::PC => self.program_counter,
-            Register::SP => u16::from(self.stack_pointer),
+            Register::SP => self.stack_pointer as u16,
         }
     }
 }

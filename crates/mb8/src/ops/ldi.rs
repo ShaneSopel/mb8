@@ -4,7 +4,7 @@ use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
     pub fn ldi(&mut self, dst: Register, value: u8) {
-        self.registers.write(dst, u16::from(value));
+        self.registers.write(dst, value as u16);
     }
 }
 
