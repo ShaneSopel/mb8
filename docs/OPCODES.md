@@ -29,4 +29,9 @@
         <td>0x12AB</td>
         <td>Put the difference of A and B registers into A register</td>
     </tr>
+    <tr>
+        <td>LDI dst value</td>
+        <td>0x2AXX</td>
+        <td>Load immediate XX value into A register</td>
+    </tr>
 </table>

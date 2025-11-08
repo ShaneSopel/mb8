@@ -54,6 +54,10 @@ pub fn parse(instruction: u16) -> Option<Opcode> {
                 _ => None,
             }
         }
+        0x2 => Some(Opcode::Ldi {
+            dst: parse_register(a)?,
+            value: u8::try_from(b << 4 | c).ok()?,
+        }),
         _ => None,
     }
 }
@@ -115,6 +119,17 @@ mod tests {
             Some(Opcode::Sub {
                 dst: Register::R0,
                 src: Register::R1,
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_ldi() {
+        assert_eq!(
+            parse(0x2069),
+            Some(Opcode::Ldi {
+                dst: Register::R0,
+                value: 0x69,
             })
         );
     }

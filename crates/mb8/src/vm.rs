@@ -37,6 +37,7 @@ impl VirtualMachine {
             Opcode::Mov { dst, src } => self.mov(*dst, *src),
             Opcode::Add { dst, src } => self.add(*dst, *src),
             Opcode::Sub { dst, src } => self.sub(*dst, *src),
+            Opcode::Ldi { dst, value } => self.ldi(*dst, *value),
         }
     }
 
