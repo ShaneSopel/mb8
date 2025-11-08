@@ -70,18 +70,12 @@ fn test_round_trip() {
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::Ld {
-            dst: Register::R0,
-            addr: 0x12,
-        };
+        let opcode = Opcode::Ld { addr: 0x123 };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::St {
-            src: Register::R0,
-            addr: 0x12,
-        };
+        let opcode = Opcode::St { addr: 0x123 };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }

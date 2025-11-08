@@ -65,14 +65,12 @@ pub enum Opcode {
     // },
 
     /* Memory instructions */
-    /// Load value from memory address `addr` into register `dst`.
+    /// Load value from memory address `addr` into R7 register.
     Ld {
-        dst: Register,
         addr: u16,
     },
-    /// Store value from register `src` into memory address `addr`.
+    /// Store value from R7 register into memory address `addr`.
     St {
-        src: Register,
         addr: u16,
     },
 }

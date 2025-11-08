@@ -134,12 +134,12 @@ Virtual machine handles the following opcodes:
     </tr>
     <tr>
         <td>LD dst addr</td>
-        <td>0x8AXX</td>
-        <td>Load data from memory address XX into A register</td>
+        <td>0x8XXX</td>
+        <td>Load data from memory address XXX into R7 register</td>
     </tr>
     <tr>
         <td>ST dst addr</td>
-        <td>0x9AXX</td>
-        <td>Store data from A register into memory address XX</td>
+        <td>0x9XXX</td>
+        <td>Store data from R7 register into memory address XXX</td>
     </tr>
 </table>

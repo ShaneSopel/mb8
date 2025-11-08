@@ -65,14 +65,8 @@ pub fn encode(opcode: &Opcode) -> u16 {
         //     let dst = encode_register(*dst);
         //     0x7000 | dst as u16
         // }
-        Opcode::Ld { dst, addr } => {
-            let dst = encode_register(*dst);
-            0x8000 | (dst as u16) << 8 | (*addr & 0xFFF)
-        }
-        Opcode::St { src, addr } => {
-            let src = encode_register(*src);
-            0x9000 | (src as u16) << 8 | (*addr & 0xFFF)
-        }
+        Opcode::Ld { addr } => 0x8000 | (*addr & 0xFFF),
+        Opcode::St { addr } => 0x9000 | (*addr & 0xFFF),
     }
 }
 
@@ -183,10 +177,7 @@ mod tests {
     #[test]
     fn test_encode_ld() {
         assert_eq!(
-            encode(&Opcode::Ld {
-                dst: Register::R0,
-                addr: 0x123
-            }),
+            encode(&Opcode::Ld { addr: 0x123 }),
             0x8000 | (Register::R0 as u16) << 4 | 0x123
         );
     }
@@ -194,10 +185,7 @@ mod tests {
     #[test]
     fn test_encode_st() {
         assert_eq!(
-            encode(&Opcode::St {
-                src: Register::R0,
-                addr: 0x123
-            }),
+            encode(&Opcode::St { addr: 0x123 }),
             0x9000 | (Register::R0 as u16) << 4 | 0x123
         );
     }
