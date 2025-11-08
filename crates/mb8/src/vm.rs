@@ -40,6 +40,8 @@ impl VirtualMachine {
             Opcode::Jnz { addr } => self.jnz(*addr),
             Opcode::Call { addr } => self.call(*addr),
             Opcode::Ret => self.ret(),
+            Opcode::Ld { dst, addr } => self.ld(*dst, *addr),
+            Opcode::St { src, addr } => self.st(*src, *addr),
         }
     }
 

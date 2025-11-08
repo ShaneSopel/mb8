@@ -81,6 +81,14 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
                 _ => None,
             }
         }
+        0x8 => Some(Opcode::Ld {
+            dst: decode_register(a)?,
+            addr: (b << 4) | c,
+        }),
+        0x9 => Some(Opcode::St {
+            src: decode_register(a)?,
+            addr: (b << 4) | c,
+        }),
         _ => None,
     }
 }
@@ -193,5 +201,27 @@ mod tests {
     #[test]
     fn test_parse_ret() {
         assert_eq!(decode(0x7000), Some(Opcode::Ret));
+    }
+
+    #[test]
+    fn test_parse_ld() {
+        assert_eq!(
+            decode(0x8001),
+            Some(Opcode::Ld {
+                dst: Register::R0,
+                addr: 0x01,
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_st() {
+        assert_eq!(
+            decode(0x9001),
+            Some(Opcode::St {
+                src: Register::R0,
+                addr: 0x01,
+            })
+        );
     }
 }

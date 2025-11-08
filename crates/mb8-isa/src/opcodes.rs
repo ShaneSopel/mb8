@@ -63,4 +63,16 @@ pub enum Opcode {
     // Pop {
     //     dst: Register,
     // },
+
+    /* Memory instructions */
+    /// Load value from memory address `addr` into register `dst`.
+    Ld {
+        dst: Register,
+        addr: u16,
+    },
+    /// Store value from register `src` into memory address `addr`.
+    St {
+        src: Register,
+        addr: u16,
+    },
 }

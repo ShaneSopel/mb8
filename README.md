@@ -132,4 +132,14 @@ Virtual machine handles the following opcodes:
         <td>0x7000</td>
         <td>Return from subroutine</td>
     </tr>
+    <tr>
+        <td>LD dst addr</td>
+        <td>0x8AXX</td>
+        <td>Load data from memory address XX into A register</td>
+    </tr>
+    <tr>
+        <td>ST dst addr</td>
+        <td>0x9AXX</td>
+        <td>Store data from A register into memory address XX</td>
+    </tr>
 </table>
