@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use mb8_isa::{registers::Register, GENERAL_PURPOSE_REGISTERS_COUNT, STACK_SIZE};
 
 /// API for accessing and manipulating the registers.
@@ -57,6 +59,22 @@ impl Registers {
             Register::PC => self.program_counter,
             Register::SP => self.stack_pointer as u16,
         }
+    }
+}
+
+impl Display for Registers {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "R0={}\t", self.read(Register::R0))?;
+        write!(f, "R1={}\t", self.read(Register::R1))?;
+        write!(f, "R2={}\t", self.read(Register::R2))?;
+        write!(f, "R3={}\t", self.read(Register::R3))?;
+        write!(f, "R4={}\t", self.read(Register::R4))?;
+        write!(f, "R5={}\t", self.read(Register::R5))?;
+        write!(f, "R6={}\t", self.read(Register::R6))?;
+        write!(f, "R7={}\t", self.read(Register::R7))?;
+        write!(f, "F={}\t", self.read(Register::F))?;
+        write!(f, "PC={}\t", self.read(Register::PC))?;
+        write!(f, "SP={}", self.read(Register::SP))
     }
 }
 
