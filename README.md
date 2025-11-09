@@ -2,6 +2,40 @@
 
 MicroBot-8bit is a simple, 8-bit virtual machine.
 
+# Running
+
+## Compile assembly
+
+MB8 provides a command-line interface for compiling assembly code into MB8 machine instructions. To compile an assembly file, run the following command:
+
+```
+cargo run --bin mb8a <file.asm>
+```
+
+Compiled binary files have the extension `.bin`.
+
+## Run VM
+
+To run the compiled binary, use the following command:
+
+```
+cargo run --bin mb8 <file.bin>
+```
+
+## Assembly
+
+You can see examples of assembly code in the [`examples`](examples) directory.
+
+- [`counter.asm`](examples/counter.asm) - A simple counter program that increments a register from 0x10 to 0xFF and halts.
+- [`stack_overflow.asm`](examples/stack_overflow.asm) - A program that demonstrates a stack overflow.
+- [`subroutines.asm`](examples/subroutines.asm) - A program that demonstrates a subroutine call.
+
+You can compile any of them and run them using the following commands:
+
+```
+cargo run --bin mb8a ./examples/counter.asm && cargo run --bin mb8 ./out.bin
+```
+
 # Architecture
 
 ## Registers
