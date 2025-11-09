@@ -55,14 +55,14 @@ pub enum Opcode {
     },
     /// Return from subroutine.
     Ret,
-    // /// Push value from register `src` onto stack.
-    // Push {
-    //     src: Register,
-    // },
-    // /// Pop value from stack into register `dst`.
-    // Pop {
-    //     dst: Register,
-    // },
+    /// Push value from register `src` onto stack.
+    Push {
+        src: Register,
+    },
+    /// Pop value from stack into register `dst`.
+    Pop {
+        dst: Register,
+    },
 
     /* Memory instructions */
     /// Load value from memory address `addr` into R7 register.

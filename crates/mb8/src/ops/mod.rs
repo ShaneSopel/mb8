@@ -8,6 +8,8 @@ mod ld;
 mod ldi;
 mod mov;
 mod nop;
+mod pop;
+mod push;
 mod ret;
 mod st;
 mod sub;

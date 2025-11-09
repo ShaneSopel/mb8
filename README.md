@@ -133,6 +133,16 @@ Virtual machine handles the following opcodes:
         <td>Return from subroutine</td>
     </tr>
     <tr>
+        <td>PUSH dst</td>
+        <td>0x71A0</td>
+        <td>Push data from A register onto stack</td>
+    </tr>
+    <tr>
+        <td>POP src</td>
+        <td>0x72A0</td>
+        <td>Pop data from stack into A register</td>
+    </tr>
+    <tr>
         <td>LD addr</td>
         <td>0x8XXX</td>
         <td>Load data from memory address XXX into R7 register</td>

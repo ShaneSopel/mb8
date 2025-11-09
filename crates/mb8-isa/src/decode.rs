@@ -78,6 +78,12 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
             // Stack operations
             match a {
                 0x0 => Some(Opcode::Ret),
+                0x1 => Some(Opcode::Push {
+                    src: decode_register(b)?,
+                }),
+                0x2 => Some(Opcode::Pop {
+                    dst: decode_register(b)?,
+                }),
                 _ => None,
             }
         }
@@ -199,6 +205,16 @@ mod tests {
     #[test]
     fn test_parse_ret() {
         assert_eq!(decode(0x7000), Some(Opcode::Ret));
+    }
+
+    #[test]
+    fn test_parse_push() {
+        assert_eq!(decode(0x7110), Some(Opcode::Push { src: Register::R1 }));
+    }
+
+    #[test]
+    fn test_parse_pop() {
+        assert_eq!(decode(0x7210), Some(Opcode::Pop { dst: Register::R1 }));
     }
 
     #[test]
