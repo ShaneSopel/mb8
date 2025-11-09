@@ -281,7 +281,7 @@ fn resolve_addr(
         AddrOperand::Imm(v) => Ok(*v),
         AddrOperand::Label(name) => {
             if let Some(addr) = labels.get(name) {
-                Ok(*addr)
+                Ok(*addr + 256)
             } else {
                 Err(format!("Unknown label '{name}' at line {line}"))
             }
