@@ -9,7 +9,7 @@ impl VirtualMachine {
         let result = a + b;
 
         let mut f_register = 0;
-        if result == 0 {
+        if result as u8 == 0 {
             f_register |= flags::Z_FLAG;
         }
         if result > 255 {
