@@ -146,6 +146,11 @@ Virtual machine handles the following opcodes:
         <td>Stop the execution (in future XX exit code will be added)</td>
     </tr>
     <tr>
+        <td>PUTC src</td>
+        <td>0x020A</td>
+        <td>Put the character from the A register into the terminal output</td>
+    </tr>
+    <tr>
         <td colspan="3">0x1 REG-REG GROUP: Operations with two registers. ALU operations</td>
     </tr>
     <tr>

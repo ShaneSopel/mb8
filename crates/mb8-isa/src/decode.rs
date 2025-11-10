@@ -1,4 +1,7 @@
-use crate::{opcodes::Opcode, registers::Register};
+use crate::{
+    opcodes::{Opcode, Syscall},
+    registers::Register,
+};
 
 const OPCODE_MASK: u16 = 0xF000;
 const A_MASK: u16 = 0x0F00;
@@ -37,6 +40,13 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
             match a {
                 0x0 => Some(Opcode::Nop),
                 0x1 => Some(Opcode::Halt),
+                0x2 => match b {
+                    0x0 => Some(Opcode::Sys {
+                        syscall: Syscall::Putc,
+                        src: decode_register(c)?,
+                    }),
+                    _ => None,
+                },
                 _ => None,
             }
         }
@@ -136,6 +146,17 @@ mod tests {
     #[test]
     fn test_parse_halt() {
         assert_eq!(decode(0x0100), Some(Opcode::Halt));
+    }
+
+    #[test]
+    fn test_parse_syscall() {
+        assert_eq!(
+            decode(0x0201),
+            Some(Opcode::Sys {
+                syscall: Syscall::Putc,
+                src: Register::R1,
+            })
+        );
     }
 
     #[test]

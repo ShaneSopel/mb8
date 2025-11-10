@@ -17,7 +17,9 @@
 {
     NOP  => 0x0000
     HALT => 0x0100
-    HALT { code: u4 } => 0x01 @ code @ 0x0
+    HALT { code: u8 } => 0x01 @ code
+    SYS { subcode: u4 } { reg: register } => 0x02 @ subcode @ reg
+    PUTC { src: register } => 0x020 @ src
     MOV { dst: register } { src: register } => 0x10 @ dst @ src
     ADD { dst: register } { src: register } => 0x11 @ dst @ src
     SUB { dst: register } { src: register } => 0x12 @ dst @ src
@@ -31,4 +33,6 @@
     POP { dst: register } => 0x72 @ dst @ 0x0
     LD { addr: u12 } => 0x8 @ addr
     ST { addr: u12 } => 0x9 @ addr
+
+    ZERO { reg: register } => asm { LDI {reg} 0 }
 }
