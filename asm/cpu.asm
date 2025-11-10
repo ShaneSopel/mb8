@@ -1,0 +1,34 @@
+#subruledef register
+{
+    R0 => 0x0
+    R1 => 0x1
+    R2 => 0x2
+    R3 => 0x3
+    R4 => 0x4
+    R5 => 0x5
+    R6 => 0x6
+    R7 => 0x7
+    SP => 0xD
+    PC => 0xE
+    F => 0xF
+}
+
+#ruledef mb8_isa
+{
+    NOP  => 0x0000
+    HALT => 0x0100
+    HALT { code: u4 } => 0x01 @ code @ 0x0
+    MOV { dst: register } { src: register } => 0x10 @ dst @ src
+    ADD { dst: register } { src: register } => 0x11 @ dst @ src
+    SUB { dst: register } { src: register } => 0x12 @ dst @ src
+    LDI { dst: register } { value: u8 } => 0x2 @ dst @ value
+    JMP { addr: u12 } => 0x3 @ addr
+    JZ { addr: u12 } => 0x4 @ addr
+    JNZ { addr: u12 } => 0x5 @ addr
+    CALL { label: u12 } => 0x6 @ label
+    RET => 0x7000
+    PUSH { src: register } => 0x71 @ src @ 0x0
+    POP { dst: register } => 0x72 @ dst @ 0x0
+    LD { addr: u12 } => 0x8 @ addr
+    ST { addr: u12 } => 0x9 @ addr
+}

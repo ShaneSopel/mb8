@@ -25,14 +25,14 @@ mod tests {
     fn test_opcode_ret() {
         // VM returns from a subroutine
         let mut vm = VirtualMachine::new();
-        vm.registers.write(Register::PC, 0x123);
-        vm.execute(&Opcode::Call { addr: 0x456 });
+        vm.registers.write(Register::PC, 0x100);
+        vm.execute(&Opcode::Call { addr: 0x100 });
         assert_eq!(vm.registers.read(Register::SP), 2);
-        assert_eq!(vm.registers.read(Register::PC), 0x456);
-        assert_eq!(vm.mem.read_u16(STACK_SIZE - 2), 0x123);
+        assert_eq!(vm.registers.read(Register::PC), 0x200);
+        assert_eq!(vm.mem.read_u16(STACK_SIZE - 2), 0x100);
         vm.execute(&Opcode::Ret);
         assert_eq!(vm.registers.read(Register::SP), 0);
-        assert_eq!(vm.registers.read(Register::PC), 0x123);
+        assert_eq!(vm.registers.read(Register::PC), 0x100);
     }
 
     #[test]

@@ -3,6 +3,8 @@
 ; ===============
 ; This program counts from 16 to 256 (overflow) and then halts.
 
+#include "../asm/cpu.asm"
+
 start:
     LDI R0 0x10 ; Initialize counter to 16
     LDI R1 1 ; Initialize increment value to 1

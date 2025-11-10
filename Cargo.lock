@@ -12,7 +12,3 @@ dependencies = [
 [[package]]
 name = "mb8-isa"
 version = "0.1.0"
-
-[[package]]
-name = "mb8a"
-version = "0.1.0"

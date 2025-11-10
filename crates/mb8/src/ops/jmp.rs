@@ -1,10 +1,10 @@
-use mb8_isa::registers::Register;
+use mb8_isa::{registers::Register, STACK_SIZE};
 
 use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
     pub fn jmp(&mut self, addr: u16) {
-        self.registers.write(Register::PC, addr);
+        self.registers.write(Register::PC, addr + STACK_SIZE);
     }
 }
 
@@ -19,7 +19,7 @@ mod tests {
         // VM jumps to a specific address
         let mut vm = VirtualMachine::new();
         vm.registers.write(Register::PC, 0x100);
-        vm.execute(&Opcode::Jmp { addr: 0x200 });
-        assert_eq!(vm.registers.read(Register::PC), 0x200);
+        vm.execute(&Opcode::Jmp { addr: 0x100 });
+        assert_eq!(vm.registers.read(Register::PC), 0x200); // Address is 0x100 + STACK_SIZE
     }
 }

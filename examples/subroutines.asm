@@ -3,6 +3,8 @@
 ; ============
 ; This example demonstrates the use of subroutines in mb8 assembly language.
 
+#include "../asm/cpu.asm"
+
 start:
     LDI R0 1 ; Initialize R0 register to 1
     CALL s1 ; Call subroutine s1
