@@ -5,14 +5,14 @@ use crate::{mem::regions::MemoryRegion, vm::VirtualMachine};
 impl VirtualMachine {
     const SCREEN_WIDTH: u16 = 64;
     const SCREEN_HEIGHT: u16 = 32;
-    const BYTES_PER_ROW: u16 = Self::SCREEN_WIDTH / 8;
+    const BYTES_PER_ROW: u16 = Self::SCREEN_WIDTH / 8; // 8
 
     pub fn draw(&mut self, x_reg: Register, y_reg: Register, height: u8) {
         let sprite_addr = self.registers.read(Register::I);
         let x0 = self.registers.read(x_reg);
         let y0 = self.registers.read(y_reg);
 
-        // let mut collision = false;
+        let mut _collision = false;
 
         for row in 0..height as u16 {
             let py = (y0 + row) % Self::SCREEN_HEIGHT;
@@ -47,7 +47,7 @@ impl VirtualMachine {
                 let new = old ^ pixel_mask;
 
                 if (old & pixel_mask) != 0 && (new & pixel_mask) == 0 {
-                    // collision = true;
+                    _collision = true;
                 }
 
                 {
