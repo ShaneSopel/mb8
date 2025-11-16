@@ -131,6 +131,16 @@ pub enum Opcode {
     DecI {
         src: Register,
     },
+    /// Load value from global (shared) memory address stored in `I` register to `dst` register.
+    Ldg {
+        dst: Register,
+        bot: Register,
+    },
+    /// Store value in global (shared) memory address stored in `I` register from `src` register.
+    Stg {
+        src: Register,
+        bot: Register,
+    },
 
     /* Draw sprite */
     /// Draw sprite at position (x, y) with height `height`.

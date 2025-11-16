@@ -86,6 +86,8 @@ impl VirtualMachine {
             Opcode::St { src } => self.st(*src),
             Opcode::IncI { src } => self.inc_i(*src),
             Opcode::DecI { src } => self.dec_i(*src),
+            Opcode::Ldg { dst, bot } => self.ldg(*dst, *bot),
+            Opcode::Stg { src, bot } => self.stg(*src, *bot),
             Opcode::Draw { x, y, height } => self.draw(*x, *y, *height),
         }
     }

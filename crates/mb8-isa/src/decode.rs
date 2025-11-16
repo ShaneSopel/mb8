@@ -148,6 +148,14 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
                 0x3 => Some(Opcode::DecI {
                     src: decode_register(b)?,
                 }),
+                0x4 => Some(Opcode::Ldg {
+                    dst: decode_register(b)?,
+                    bot: decode_register(c)?,
+                }),
+                0x5 => Some(Opcode::Stg {
+                    src: decode_register(b)?,
+                    bot: decode_register(c)?,
+                }),
                 _ => None,
             }
         }
@@ -390,6 +398,28 @@ mod tests {
     #[test]
     fn test_parse_dec_i() {
         assert_eq!(decode(0xB310), Some(Opcode::DecI { src: Register::R1 }));
+    }
+
+    #[test]
+    fn test_parse_ldg() {
+        assert_eq!(
+            decode(0xB412),
+            Some(Opcode::Ldg {
+                dst: Register::R1,
+                bot: Register::R2
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_stg() {
+        assert_eq!(
+            decode(0xB512),
+            Some(Opcode::Stg {
+                src: Register::R1,
+                bot: Register::R2
+            })
+        );
     }
 
     #[test]

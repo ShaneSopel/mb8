@@ -7,6 +7,8 @@ pub mod registers;
 pub const MEMORY_BANK_SIZE: usize = 4096;
 /// MB8 Machine stack size
 pub const STACK_SIZE: u16 = 256;
+/// MB8 Machine mailbox size
+pub const MAILBOX_SIZE: usize = 256;
 /// MB8 Machine graphic buffer size
 pub const GRAPHIC_BUFFER_SIZE: usize = 256;
 /// Represents the general purpose registers count of the CPU.

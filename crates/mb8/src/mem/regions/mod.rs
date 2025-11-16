@@ -1,5 +1,6 @@
 pub mod general;
 pub mod graphic_buffer;
+pub mod mailbox;
 pub mod rom;
 pub mod stack;
 

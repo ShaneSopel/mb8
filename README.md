@@ -85,7 +85,7 @@ Virtual machine contains the following registers:
     </tr>
 </table>
 
-Registers 0x08 - 0x0C are reserved for future use.
+Registers 0x08 - 0x0B are reserved for future use.
 
 ## Flags
 
@@ -156,6 +156,11 @@ Virtual machine handles the following opcodes:
         <td>PUTC src</td>
         <td>0x020A</td>
         <td>Put the character from the A register into the terminal output</td>
+    </tr>
+    <tr>
+        <td>YIELD src</td>
+        <td>0x030A</td>
+        <td>Yield the control to the bot with id from the A register</td>
     </tr>
     <tr>
         <td colspan="3">0x1 REG-REG GROUP: Operations with two registers. ALU operations</td>
@@ -286,6 +291,16 @@ Virtual machine handles the following opcodes:
         <td>DEC_I src</td>
         <td>0xB3A0</td>
         <td>Decrement memory address stored in I register by value in A register</td>
+    </tr>
+    <tr>
+        <td>LDG dst bot</td>
+        <td>0xB4A0</td>
+        <td>Load data from mailbox of bot bot_id into A register</td>
+    </tr>
+    <tr>
+        <td>STG src bot</td>
+        <td>0xB5A0</td>
+        <td>Store data from A register into mailbox of bot bot_id</td>
     </tr>
     <tr>
         <td colspan="3">0xA DRAWING: Drawing operations</td>

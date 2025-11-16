@@ -1,7 +1,8 @@
-use mb8_isa::{GRAPHIC_BUFFER_SIZE, MEMORY_BANK_SIZE, STACK_SIZE};
+use mb8_isa::{GRAPHIC_BUFFER_SIZE, MAILBOX_SIZE, MEMORY_BANK_SIZE, STACK_SIZE};
 
 use super::regions::{
-    general::GeneralRegion, graphic_buffer::GraphicBufferRegion, rom::ROMRegion, stack::StackRegion,
+    general::GeneralRegion, graphic_buffer::GraphicBufferRegion, mailbox::MailboxRegion,
+    rom::ROMRegion, stack::StackRegion,
 };
 
 fn empty_bank() -> Box<[u8; MEMORY_BANK_SIZE]> {
@@ -51,5 +52,11 @@ impl MemoryContext {
         let begin = 0;
         let end = MEMORY_BANK_SIZE - 1;
         ROMRegion::new(begin, end as u16, &mut self.rom[begin as usize..=end])
+    }
+
+    pub fn mailbox(&mut self) -> MailboxRegion<'_> {
+        let begin = MEMORY_BANK_SIZE - MAILBOX_SIZE;
+        let end = MEMORY_BANK_SIZE - 1;
+        MailboxRegion::new(begin as u16, end as u16, &mut self.ram[begin..=end])
     }
 }

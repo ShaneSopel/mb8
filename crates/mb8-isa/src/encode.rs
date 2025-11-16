@@ -33,6 +33,7 @@ pub fn encode_program(program: &[Opcode]) -> Vec<u8> {
 
 /// Encode an Opcode into a 16-bit instruction.
 #[must_use]
+#[allow(clippy::too_many_lines)]
 pub fn encode(opcode: &Opcode) -> u16 {
     match opcode {
         Opcode::Nop => 0x0000,
@@ -120,6 +121,16 @@ pub fn encode(opcode: &Opcode) -> u16 {
         Opcode::DecI { src } => {
             let src = encode_register(*src);
             0xB300 | (src as u16) << 4
+        }
+        Opcode::Ldg { dst, bot } => {
+            let dst = encode_register(*dst);
+            let bot = encode_register(*bot);
+            0xB400 | (dst as u16) << 4 | (bot as u16)
+        }
+        Opcode::Stg { src, bot } => {
+            let src = encode_register(*src);
+            let bot = encode_register(*bot);
+            0xB500 | (src as u16) << 4 | (bot as u16)
         }
         Opcode::Draw { x, y, height } => {
             let x = encode_register(*x);
@@ -353,6 +364,28 @@ mod tests {
     #[test]
     fn test_encode_dec_i() {
         assert_eq!(encode(&Opcode::DecI { src: Register::R1 }), 0xB310);
+    }
+
+    #[test]
+    fn test_encode_ldg() {
+        assert_eq!(
+            encode(&Opcode::Ldg {
+                dst: Register::R1,
+                bot: Register::R2,
+            }),
+            0xB412
+        );
+    }
+
+    #[test]
+    fn test_encode_stg() {
+        assert_eq!(
+            encode(&Opcode::Stg {
+                src: Register::R1,
+                bot: Register::R2
+            }),
+            0xB512
+        );
     }
 
     #[test]
