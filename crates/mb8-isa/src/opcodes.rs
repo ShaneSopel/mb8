@@ -7,7 +7,6 @@ use crate::registers::Register;
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Syscall {
     Putc,
-    Yield,
 }
 
 /// Full list of MB8 opcodes used in VM.
@@ -73,31 +72,38 @@ pub enum Opcode {
     },
 
     /* Jump instructions */
-    /// Jump to address `addr`.
+    /// Absolute jump to address stored in registers `hi` and `lo` 0x{hi:02x}{lo:02x}.
     Jmp {
-        addr: u16,
+        hi: Register,
+        lo: Register,
     },
-    /// Jump to address `addr` if flag register has zero flag
-    Jz {
-        addr: u16,
+    /// Relative jump by signed offset.
+    /// PC = PC + offset
+    Jr {
+        offset: i8,
     },
-    /// Jump to address `addr` if flag register does not have zero flag
-    Jnz {
-        addr: u16,
+    /// Relative jump if zero flag is set.
+    Jzr {
+        offset: i8,
     },
-    /// Jump to address `addr` if flag register has carry flag
-    Jc {
-        addr: u16,
+    /// Relative jump if zero flag is not set.
+    Jnzr {
+        offset: i8,
     },
-    /// Jump to address `addr` if flag register does not have carry flag
-    Jnc {
-        addr: u16,
+    /// Relative jump if carry flag is set.
+    Jcr {
+        offset: i8,
+    },
+    /// Relative jump if carry flag is not set.
+    Jncr {
+        offset: i8,
     },
 
     /* Stack instructions */
     /// Call subroutine at address `addr`.
     Call {
-        addr: u16,
+        hi: Register,
+        lo: Register,
     },
     /// Return from subroutine.
     Ret,
@@ -110,43 +116,17 @@ pub enum Opcode {
         dst: Register,
     },
 
-    /* Memory operations */
-    /// Set memory index register `I` to `value`.
-    LdiI {
-        value: u16,
-    },
-    /// Load value from memory address stored in `I` register to `dst` register.
+    /* Memory instructions */
+    /// Load byte from memory address in `hi` and `lo` registers into register `dst`.
     Ld {
         dst: Register,
+        hi: Register,
+        lo: Register,
     },
-    /// Store value in memory address stored in `I` register from `src` register.
+    /// Store byte from register `src` into memory address in `hi` and `lo` registers.
     St {
         src: Register,
-    },
-    /// Increment memory address stored in `I` register by value stored in `src` register.
-    IncI {
-        src: Register,
-    },
-    /// Decrement memory address stored in `I` register by value stored in `src` register.
-    DecI {
-        src: Register,
-    },
-    /// Load value from global (shared) memory address stored in `I` register to `dst` register.
-    Ldg {
-        dst: Register,
-        bot: Register,
-    },
-    /// Store value in global (shared) memory address stored in `I` register from `src` register.
-    Stg {
-        src: Register,
-        bot: Register,
-    },
-
-    /* Draw sprite */
-    /// Draw sprite at position (x, y) with height `height`.
-    Draw {
-        x: Register,
-        y: Register,
-        height: u8,
+        hi: Register,
+        lo: Register,
     },
 }
