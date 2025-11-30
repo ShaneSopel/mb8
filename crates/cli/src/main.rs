@@ -226,7 +226,7 @@ fn map_key_to_char(key: Key, shift: bool) -> Option<u8> {
     Some(ch)
 }
 
-fn run_vm(kernel: PathBuf, user: Vec<PathBuf>) {
+fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
     let Ok(rom) = std::fs::read(kernel) else {
         return;
     };
@@ -236,6 +236,10 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>) {
     let Ok(mut window) = Window::new("MB8", 640, 480, WindowOptions::default()) else {
         return;
     };
+
+    let seed = seed.unwrap_or(1);
+
+    vm.devices.rand().number = (seed as u8).max(1);
 
     // MakeFS
     let mut fs = vec![0u8; 65536];
@@ -355,7 +359,7 @@ fn main() {
 
     match cli.command {
         config::Commands::Run { kernel, user } => {
-            run_vm(kernel, user);
+            run_vm(kernel, user, cli.seed);
         }
     }
 }
