@@ -5,6 +5,7 @@ use std::{
 
 use clap::Parser;
 use mb8::vm;
+use mb8c::compile;
 use minifb::{Key, KeyRepeat, Window, WindowOptions};
 use tty::render_tty;
 
@@ -366,6 +367,21 @@ fn main() {
     match cli.command {
         config::Commands::Run { kernel, user } => {
             run_vm(kernel, user, cli.seed);
+        }
+        config::Commands::Compile { source } => {
+            let code = match std::fs::read_to_string(source) {
+                Ok(code) => code,
+                Err(err) => {
+                    eprintln!("Failed to read source file: {err}");
+                    return;
+                }
+            };
+            match compile(&code) {
+                Ok(()) => {}
+                Err(err) => {
+                    eprintln!("Compilation error: {err:?}");
+                }
+            }
         }
     }
 }
