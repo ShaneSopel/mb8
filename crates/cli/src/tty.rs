@@ -1,3 +1,5 @@
+use crate::tty;
+
 const TTY_COLS: usize = 40;
 const TTY_ROWS: usize = 25;
 
@@ -140,28 +142,137 @@ static FONT: [[u8; 8]; 128] = [
     [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // U+007F
 ];
 
-pub fn render_tty(tty: &[u8], graphics: &mut [u32]) {
-    if graphics.len() < GRAPHICS_WIDTH * GRAPHICS_HEIGHT {
-        return;
+pub struct Tty {
+    buffer: Vec<char>,
+    head: usize,
+    tail: usize,
+    full: bool,
+
+    cols: usize,
+    rows: usize,
+}
+
+impl Tty {
+    pub fn new(cols: usize, rows: usize, capacity: usize) -> Self {
+        Self {
+            buffer: vec![' '; capacity],
+            head: 0,
+            tail: 0,
+            full: false,
+            cols: cols,
+            rows: rows,
+        }
     }
 
-    for y in 0..TTY_ROWS {
-        for x in 0..TTY_COLS {
-            let char_index = y * TTY_COLS + x;
-            let char = tty[char_index] as usize;
-            let glyph = FONT.get(char).unwrap_or(&FONT[0]);
+    pub fn push_char(&mut self, c: char) {
+        if self.full {
+            self.head = (self.head + 1) % self.buffer.len();
+        }
+        self.buffer[self.tail] = c;
+        self.tail = (self.tail + 1) % self.buffer.len();
 
-            for (row, row_bits) in glyph.iter().enumerate().take(FONT_HEIGHT) {
-                let pixel_y = y * FONT_HEIGHT + row;
+        if self.tail == self.head {
+            self.full = true;
+        }
+    }
 
-                for col in 0..FONT_WIDTH {
-                    let bit = (row_bits >> col) & 1;
-                    let pixel_x = x * FONT_WIDTH + col;
-                    graphics[pixel_y * GRAPHICS_WIDTH + pixel_x] = if bit == 1 {
-                        PIXEL_ON_COLOR
-                    } else {
-                        PIXEL_OFF_COLOR
-                    };
+    pub fn write_byte(&mut self, byte: u8) {
+        let c = byte as char;
+
+        println!("writing byte: {}", c);
+
+        match c {
+            '\n' => self.move_to_next_line(),
+            _ => self.push_char(c),
+        }
+    }
+
+    fn move_to_next_line(&mut self) {
+        if self.tail + self.cols < self.buffer.len() {
+            self.tail += self.cols;
+        } else {
+            self.tail = self.tail % self.buffer.len();
+        }
+
+        if self.tail == self.head {
+            self.head = (self.head + self.cols) % self.buffer.len();
+        }
+    }
+
+    pub fn get_visible(&mut self) -> Vec<char> {
+        let visible_len = self.rows * self.cols;
+        let mut out = Vec::with_capacity(visible_len);
+
+        let total = if self.full {
+            self.buffer.len()
+        } else {
+            if self.tail >= self.head {
+                self.tail - self.head
+            } else {
+                self.buffer.len() - self.head + self.tail
+            }
+        };
+
+        let start_offset = if total > visible_len {
+            total - visible_len
+        } else {
+            0
+        };
+
+        let mut idx = (self.head + start_offset) % self.buffer.len();
+
+        for _ in 0..visible_len {
+            out.push(self.buffer[idx]);
+            idx = (idx + 1) % self.buffer.len();
+        }
+
+        out
+    }
+
+    pub fn render(&mut self, framebuffer: &mut [u32], fb_width: usize, fb_height: usize) {
+        let chars = self.get_visible();
+
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let ch = chars[row * self.cols + col] as usize;
+
+                let color = if self.buffer[row * self.cols + col] != '\0' {
+                    PIXEL_ON_COLOR
+                } else {
+                    PIXEL_OFF_COLOR
+                };
+
+                self.draw_glyph(framebuffer, fb_width, col * 8, row * 8, ch, color);
+            }
+        }
+    }
+
+    fn draw_glyph(
+        &self,
+        framebuffer: &mut [u32],
+        fb_width: usize,
+        x: usize,
+        y: usize,
+        ch: usize,
+        color: u32,
+    ) {
+        let glyph = FONT[ch];
+
+        for gy in 0..8 {
+            let row = glyph[gy];
+
+            let mut reverse_row = 0;
+            for i in 0..8 {
+                reverse_row |= ((row >> i) & 1) << (7 - i);
+            }
+            for gx in 0..8 {
+                let bit = (reverse_row >> (7 - gx)) & 1;
+
+                let px = x + gx;
+                let py = y + gy;
+
+                if px < fb_width && py < fb_width {
+                    framebuffer[py * fb_width + px] = if bit == 1 { color } else { 0x00000000 }
                 }
             }
         }
