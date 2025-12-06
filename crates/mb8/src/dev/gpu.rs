@@ -142,7 +142,7 @@ impl Device for GPU {
                         }
                     }
 
-                    let last_line_start = ((registers::TTY_ROWS - 1) as usize * cols);
+                    let last_line_start = (registers::TTY_ROWS - 1) as usize * cols;
                     for x in 0..registers::TTY_COLS {
                         tty_buf[last_line_start + x as usize] = b' ';
                     }

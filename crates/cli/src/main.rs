@@ -323,10 +323,9 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
                 continue;
             }
 
-            //force_render = true;
             if let Some(mapped_char) = map_key_to_char(key, left_shift || right_shift) {
                 vm.devices.keyboard().key_pressed(mapped_char);
-            };
+            }
 
             key_last_pressed.insert(key, current_time);
         }
@@ -352,7 +351,7 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
                 tty.write_byte(byte);
             }
 
-            tty.render(buf.as_mut_slice(), 320, 200);
+            tty.render(buf.as_mut_slice(), 320);
 
             if window.update_with_buffer(&buf, 320, 200).is_err() {
                 return;

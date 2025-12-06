@@ -1,12 +1,10 @@
-use crate::tty;
+//const TTY_COLS: usize = 40;
+//const TTY_ROWS: usize = 25;
 
-const TTY_COLS: usize = 40;
-const TTY_ROWS: usize = 25;
-
-const FONT_WIDTH: usize = 8;
-const FONT_HEIGHT: usize = 8;
-const GRAPHICS_WIDTH: usize = TTY_COLS * FONT_WIDTH;
-const GRAPHICS_HEIGHT: usize = TTY_ROWS * FONT_HEIGHT;
+//const FONT_WIDTH: usize = 8;
+//const FONT_HEIGHT: usize = 8;
+//const GRAPHICS_WIDTH: usize = TTY_COLS * FONT_WIDTH;
+//const GRAPHICS_HEIGHT: usize = TTY_ROWS * FONT_HEIGHT;
 
 const PIXEL_ON_COLOR: u32 = 0x006a_bfc6;
 const PIXEL_OFF_COLOR: u32 = 0x0050_459b;
@@ -142,6 +140,27 @@ static FONT: [[u8; 8]; 128] = [
     [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // U+007F
 ];
 
+fn draw_glyph(framebuffer: &mut [u32], fb_width: usize, x: usize, y: usize, ch: usize, color: u32) {
+    let glyph = FONT[ch];
+
+    for (gy, row) in glyph.iter().enumerate() {
+        let mut reverse_row = 0;
+        for i in 0..8 {
+            reverse_row |= ((row >> i) & 1) << (7 - i);
+        }
+        for gx in 0..8 {
+            let bit = (reverse_row >> (7 - gx)) & 1;
+
+            let px = x + gx;
+            let py = y + gy;
+
+            if px < fb_width && py < fb_width {
+                framebuffer[py * fb_width + px] = if bit == 1 { color } else { PIXEL_OFF_COLOR }
+            }
+        }
+    }
+}
+
 pub struct Tty {
     buffer: Vec<char>,
     head: usize,
@@ -153,33 +172,28 @@ pub struct Tty {
 }
 
 impl Tty {
-    pub fn new(cols: usize, rows: usize, capacity: usize) -> Self {
+    pub fn new(col: usize, row: usize, capacity: usize) -> Self {
         Self {
             buffer: vec![' '; capacity],
             head: 0,
             tail: 0,
             full: false,
-            cols: cols,
-            rows: rows,
+            cols: col,
+            rows: row,
         }
     }
 
     pub fn push_char(&mut self, c: char) {
-        if self.full {
-            self.head = (self.head + 1) % self.buffer.len();
-        }
         self.buffer[self.tail] = c;
         self.tail = (self.tail + 1) % self.buffer.len();
 
         if self.tail == self.head {
-            self.full = true;
+            self.head = (self.head + 1) % self.buffer.len();
         }
     }
 
     pub fn write_byte(&mut self, byte: u8) {
         let c = byte as char;
-
-        println!("writing byte: {}", c);
 
         match c {
             '\n' => self.move_to_next_line(),
@@ -191,7 +205,7 @@ impl Tty {
         if self.tail + self.cols < self.buffer.len() {
             self.tail += self.cols;
         } else {
-            self.tail = self.tail % self.buffer.len();
+            self.tail %= self.buffer.len();
         }
 
         if self.tail == self.head {
@@ -205,19 +219,13 @@ impl Tty {
 
         let total = if self.full {
             self.buffer.len()
+        } else if self.tail >= self.head {
+            self.tail - self.head
         } else {
-            if self.tail >= self.head {
-                self.tail - self.head
-            } else {
-                self.buffer.len() - self.head + self.tail
-            }
+            self.buffer.len() - self.head + self.tail
         };
 
-        let start_offset = if total > visible_len {
-            total - visible_len
-        } else {
-            0
-        };
+        let start_offset = total.saturating_sub(visible_len);
 
         let mut idx = (self.head + start_offset) % self.buffer.len();
 
@@ -229,51 +237,20 @@ impl Tty {
         out
     }
 
-    pub fn render(&mut self, framebuffer: &mut [u32], fb_width: usize, fb_height: usize) {
+    pub fn render(&mut self, framebuffer: &mut [u32], fb_width: usize) {
         let chars = self.get_visible();
 
         for row in 0..self.rows {
             for col in 0..self.cols {
                 let ch = chars[row * self.cols + col] as usize;
 
-                let color = if self.buffer[row * self.cols + col] != '\0' {
-                    PIXEL_ON_COLOR
-                } else {
+                let color = if chars[row * self.cols + col] == '\0' {
                     PIXEL_OFF_COLOR
+                } else {
+                    PIXEL_ON_COLOR
                 };
 
-                self.draw_glyph(framebuffer, fb_width, col * 8, row * 8, ch, color);
-            }
-        }
-    }
-
-    fn draw_glyph(
-        &self,
-        framebuffer: &mut [u32],
-        fb_width: usize,
-        x: usize,
-        y: usize,
-        ch: usize,
-        color: u32,
-    ) {
-        let glyph = FONT[ch];
-
-        for gy in 0..8 {
-            let row = glyph[gy];
-
-            let mut reverse_row = 0;
-            for i in 0..8 {
-                reverse_row |= ((row >> i) & 1) << (7 - i);
-            }
-            for gx in 0..8 {
-                let bit = (reverse_row >> (7 - gx)) & 1;
-
-                let px = x + gx;
-                let py = y + gy;
-
-                if px < fb_width && py < fb_width {
-                    framebuffer[py * fb_width + px] = if bit == 1 { color } else { 0x00000000 }
-                }
+                draw_glyph(framebuffer, fb_width, col * 8, row * 8, ch, color);
             }
         }
     }
