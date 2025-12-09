@@ -1,5 +1,21 @@
-use minifb::{Key};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
+};
 
+use minifb::{Key, KeyRepeat, Window};// WindowOptions};
+
+mod vm;
+
+pub struct keyboard
+{
+    left_shift: bool,
+    right_shift: bool,
+}
+
+
+impl  keyboard {
+    
 #[allow(clippy::too_many_lines)]
 pub fn map_key_to_char(key: Key, shift: bool) -> Option<u8> {
     let ch = match key {
@@ -210,4 +226,48 @@ pub fn map_key_to_char(key: Key, shift: bool) -> Option<u8> {
     };
 
     Some(ch)
+}
+
+pub fn key_pressed(&mut self, window: Window, vm: vm::VirtualMachine)
+{
+
+    let mut key_last_pressed = HashMap::new();
+
+    for key in window.get_keys_pressed(KeyRepeat::No) {
+            let current_time = Instant::now();
+
+            if let Some(last_time) = key_last_pressed.get(&key) {
+                if current_time.duration_since(*last_time) < Duration::from_millis(100) {
+                    continue;
+                }
+            }
+            if key == Key::LeftShift {
+                self.left_shift = true;
+                continue;
+            }
+            if key == Key::RightShift {
+                self.right_shift = true;
+                continue;
+            }
+
+            if let Some(mapped_char) = keyboard::map_key_to_char(key, self.left_shift || self.right_shift) {
+                vm.devices.keyboard().key_pressed(mapped_char);
+            }
+
+            key_last_pressed.insert(key, current_time);
+        }
+}
+
+pub fn key_released(&mut self, window: Window)
+{
+            for key in window.get_keys_released() {
+            if key == Key::LeftShift {
+                self.left_shift = false;
+            }
+            if key == Key::RightShift {
+                self.right_shift = false;
+            }
+        }
+}
+
 }
