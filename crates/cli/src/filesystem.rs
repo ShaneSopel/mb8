@@ -1,4 +1,9 @@
-    // MakeFS
+   use std::path::PathBuf; 
+   use mb8::vm::VirtualMachine;
+
+    pub fn makefs(user: Vec<PathBuf>, vm: &mut VirtualMachine)
+    {
+
     let mut fs = vec![0u8; 65536];
     let mut blocks = 1;
     let mut files = 0;
@@ -44,3 +49,5 @@
         return;
     };
     vm.devices.disk().set(fs);
+
+    }

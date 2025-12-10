@@ -2,6 +2,7 @@ use clap::Parser;
 use mb8c::compile;
 
 mod config;
+mod filesystem;
 mod keyboard;
 mod tty;
 mod vm;

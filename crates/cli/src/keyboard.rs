@@ -3,18 +3,26 @@ use std::{
     time::{Duration, Instant},
 };
 
-use minifb::{Key, KeyRepeat, Window};// WindowOptions};
+use mb8::vm;
+use minifb::{Key, KeyRepeat, Window};
 
-mod vm;
-
-pub struct keyboard
+pub struct Keyboard
 {
     left_shift: bool,
     right_shift: bool,
+    key_last_pressed:  HashMap<Key, Instant>,
 }
 
+impl  Keyboard {
 
-impl  keyboard {
+
+ pub fn new(l_shift: bool, r_shift: bool) -> Self {
+        Self {
+            left_shift: l_shift,
+            right_shift: r_shift,
+            key_last_pressed: HashMap::new(),
+        }
+    }
     
 #[allow(clippy::too_many_lines)]
 pub fn map_key_to_char(key: Key, shift: bool) -> Option<u8> {
@@ -228,15 +236,13 @@ pub fn map_key_to_char(key: Key, shift: bool) -> Option<u8> {
     Some(ch)
 }
 
-pub fn key_pressed(&mut self, window: Window, vm: vm::VirtualMachine)
+pub fn key_pressed(&mut self, window: &Window, vm: &mut vm::VirtualMachine)
 {
-
-    let mut key_last_pressed = HashMap::new();
 
     for key in window.get_keys_pressed(KeyRepeat::No) {
             let current_time = Instant::now();
 
-            if let Some(last_time) = key_last_pressed.get(&key) {
+            if let Some(last_time) = self.key_last_pressed.get(&key) {
                 if current_time.duration_since(*last_time) < Duration::from_millis(100) {
                     continue;
                 }
@@ -250,15 +256,16 @@ pub fn key_pressed(&mut self, window: Window, vm: vm::VirtualMachine)
                 continue;
             }
 
-            if let Some(mapped_char) = keyboard::map_key_to_char(key, self.left_shift || self.right_shift) {
+            if let Some(mapped_char) = Keyboard::map_key_to_char(key, self.left_shift || self.right_shift) {
                 vm.devices.keyboard().key_pressed(mapped_char);
             }
 
-            key_last_pressed.insert(key, current_time);
+            self.key_last_pressed.insert(key, current_time);
         }
+
 }
 
-pub fn key_released(&mut self, window: Window)
+pub fn key_released(&mut self, window: &Window)
 {
             for key in window.get_keys_released() {
             if key == Key::LeftShift {

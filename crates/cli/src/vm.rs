@@ -3,15 +3,15 @@ use std::{
     time::{Duration, Instant},
 };
 
+use crate::{filesystem::makefs, keyboard::Keyboard};
 use mb8::{
-    dev::gpu::registers::{TTY_COLS, TTY_ROWS},
+    dev::{gpu::registers::{TTY_COLS, TTY_ROWS}},
     vm,
 };
 
 use minifb::{Window, WindowOptions};
 
 use crate::tty::Tty;
-use crate::keyboard;
 
 const OPS_PER_FRAME: u32 = 1024;
 const RENDER_INTERVAL: u32 = 1000;
@@ -32,59 +32,21 @@ pub fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
     let mut tty = Tty::new(TTY_COLS as usize, TTY_ROWS as usize, 1024);
     vm.devices.rand().number = (seed as u8).max(1);
 
-    // MakeFS
-    let mut fs = vec![0u8; 65536];
-    let mut blocks = 1;
-    let mut files = 0;
-    for path in user {
-        let Ok(data) = std::fs::read(&path) else {
-            continue;
-        };
-        let Ok(name) = path.file_stem().ok_or("Failed to get file name") else {
-            continue;
-        };
-
-        let size = (data.len() / 256) + 1;
-
-        // Add to zero block
-        let zero_block_start = files * 16;
-        fs[zero_block_start] = 1;
-        fs[zero_block_start + 1] = blocks;
-        fs[zero_block_start + 2] = size as u8;
-
-        let chars = name.as_encoded_bytes();
-        if chars.len() > 8 {
-            eprintln!(
-                "Error: File name {} is too long. Max 8 characters allowed.",
-                name.to_string_lossy()
-            );
-            return;
-        }
-        for (i, c) in chars.iter().enumerate() {
-            fs[zero_block_start + 3 + i] = *c;
-        }
-
-        let block_start = blocks as usize * 256;
-        for (i, d) in data.iter().enumerate() {
-            fs[block_start + i] = *d;
-        }
-
-        blocks += size as u8;
-        files += 1;
-    }
-
-    let Ok(fs) = fs.try_into() else {
-        eprintln!("Failed to convert file system");
-        return;
-    };
-    vm.devices.disk().set(fs);
+    makefs(user, &mut vm);
 
     let mut buf = vec![0u32; 320 * 200];
     let mut ticks = RENDER_INTERVAL - 1;
     let mut last_render = Instant::now();
+    let l_shift = false;
+    let r_shift = false;
+    let key = &mut Keyboard::new(l_shift, r_shift);
 
     while !vm.halted && window.is_open() {
         ticks = ticks.wrapping_add(1);
+
+        Keyboard::key_pressed( key, &window, &mut vm);
+
+        Keyboard::key_released( key, &window);
 
         for _ in 0..OPS_PER_FRAME {
             if vm.halted {
