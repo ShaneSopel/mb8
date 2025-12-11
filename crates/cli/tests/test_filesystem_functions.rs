@@ -1,14 +1,14 @@
-use mb8::vm::VirtualMachine;
-use mb8_cli::filesystem::makefs;
 
-use std::fs;
-use std::path::PathBuf;
+use mb8_cli::filesystem::makefs;
+use mb8::vm::VirtualMachine;
 use tempfile::tempdir;
+use std::fs;
+
 
 #[test]
 fn test_single_small_file() {
-    let dir = tempdir().unwrap();
-    //create file
+       let dir = tempdir().unwrap();
+    //create file 
     let file_path = dir.path().join("hello.txt");
 
     // write to file
@@ -17,10 +17,11 @@ fn test_single_small_file() {
     let mut vm = VirtualMachine::default();
     makefs(vec![file_path.clone()], &mut vm);
 
-    //Preparing disk block
-    let used_flag = vm.devices.read(0xF200 + 0);
-    let start_block = vm.devices.read(0xF200 + 1);
-    let size_blocks = vm.devices.read(0xF200 + 2);
+    let disk_img = vm.devices.disk().dump();
+
+    let used_flag = disk_img[0];
+    let start_block = disk_img[1];
+    let size_blocks = disk_img[2];
 
     //comparing disk block
     assert_eq!(used_flag, 1);
@@ -28,17 +29,16 @@ fn test_single_small_file() {
     assert_eq!(size_blocks, 1);
 
     //read file name without extension
-    let name_bytes: Vec<u8> = (0..5).map(|i| vm.devices.read(0xF200 + 3 + i)).collect();
-
+    let name_bytes: Vec<u8> = disk_img[3..8].to_vec();
     assert_eq!(&name_bytes, b"hello");
 
     //data block starts at 1 with offset of 256
-    let first_data_byte = vm.devices.read(0xF200 + 256);
-    assert_eq!(first_data_byte, b'h');
+    assert_eq!(disk_img[256], b'h');
 }
 
 #[test]
 fn test_two_files() {
+
     let dir = tempdir().unwrap();
     let a = dir.path().join("a.bin");
     let b = dir.path().join("b.bin");
@@ -49,13 +49,24 @@ fn test_two_files() {
     let mut vm = VirtualMachine::default();
     makefs(vec![a.clone(), b.clone()], &mut vm);
 
+    let disk_img = vm.devices.disk().dump();
+
+    let used_flag = disk_img[0];
+    let start_block = disk_img[1];
+    let size_blocks = disk_img[2];
+
+     let used_flag_b = disk_img[16];
+    let start_block_b = disk_img[17];
+    let size_blocks_b = disk_img[18];
+
     //Comparing disk block file a
-    assert_eq!(vm.devices.read(0xF200 + 0), 1);
-    assert_eq!(vm.devices.read(0xF200 + 1), 1);
-    assert_eq!(vm.devices.read(0xF200 + 2), 1);
+    assert_eq!(used_flag, 1);
+    assert_eq!(start_block, 1); 
+    assert_eq!(size_blocks, 1); 
 
     //Comparing disk block file b
-    assert_eq!(vm.devices.read(0xF200 + 16), 1);
-    assert_eq!(vm.devices.read(0xF200 + 17), 2);
-    assert_eq!(vm.devices.read(0xF200 + 18), 1);
+    assert_eq!(used_flag_b, 1); 
+    assert_eq!(start_block_b, 2); 
+    assert_eq!(size_blocks_b, 1); 
 }
+
