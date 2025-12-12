@@ -1,21 +1,23 @@
+use chumsky::Parser;
+use logos::Logos;
 use mb8c::{
-    error::CompileError,
-    parser::{ast::Type, base::Parser},
-    semantic::analyze,
-    tokenizer::lexer::Lexer,
+    ast::Type, error::CompileError, parser::program::program_parser, semantic::analyze,
+    tokens::TokenKind,
 };
 
 #[test]
 fn test_return_type() {
     // Expected void, found int
     {
-        let src = r#"
+        let src = r"
         void main() {
             return 1;
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         assert_eq!(
             analyze(&ast).unwrap_err(),
             CompileError::TypeMismatch {
@@ -27,14 +29,16 @@ fn test_return_type() {
 
     // Expected void, found char
     {
-        let src = r#"
+        let src = r"
         void main() {
             char a = 1;
             return a;
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         assert_eq!(
             analyze(&ast).unwrap_err(),
             CompileError::TypeMismatch {
@@ -46,26 +50,30 @@ fn test_return_type() {
 
     // Expected void, found void
     {
-        let src = r#"
+        let src = r"
         void main() {
             return;
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         let result = analyze(&ast);
         assert!(result.is_ok(), "{result:?}");
     }
 
     // Expected int, found void
     {
-        let src = r#"
+        let src = r"
         int main() {
             return;
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         assert_eq!(
             analyze(&ast).unwrap_err(),
             CompileError::TypeMismatch {
@@ -77,14 +85,16 @@ fn test_return_type() {
 
     // Expected int, found char
     {
-        let src = r#"
+        let src = r"
         int main() {
             char a = 1;
             return a;
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         assert_eq!(
             analyze(&ast).unwrap_err(),
             CompileError::TypeMismatch {
@@ -96,13 +106,15 @@ fn test_return_type() {
 
     // Expected int, found int
     {
-        let src = r#"
+        let src = r"
         int main() {
             return 0;
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         let result = analyze(&ast);
         assert!(result.is_ok(), "{result:?}");
     }
@@ -112,7 +124,7 @@ fn test_return_type() {
 fn test_call() {
     // Call a function
     {
-        let src = r#"
+        let src = r"
         int foo() {
             return 0;
         }
@@ -120,16 +132,18 @@ fn test_call() {
         int main() {
             foo();
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         let result = analyze(&ast);
         assert!(result.is_ok(), "{result:?}");
     }
 
     // Call a function with arguments
     {
-        let src = r#"
+        let src = r"
         int foo(int a) {
             return a;
         }
@@ -137,16 +151,18 @@ fn test_call() {
         int main() {
             foo(1);
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         let result = analyze(&ast);
         assert!(result.is_ok(), "{result:?}");
     }
 
     // Call a function with arguments, wrong argument count
     {
-        let src = r#"
+        let src = r"
         int foo(int a) {
             return a;
         }
@@ -154,9 +170,11 @@ fn test_call() {
         int main() {
             foo(1, 2);
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         let result = analyze(&ast);
         assert_eq!(
             result.unwrap_err(),
@@ -169,7 +187,7 @@ fn test_call() {
 
     // Call a function with arguments, wrong argument count
     {
-        let src = r#"
+        let src = r"
         int foo(int a) {
             return a;
         }
@@ -177,9 +195,11 @@ fn test_call() {
         int main() {
             foo();
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         let result = analyze(&ast);
         assert_eq!(
             result.unwrap_err(),
@@ -194,44 +214,50 @@ fn test_call() {
 #[test]
 fn test_if() {
     {
-        let src = r#"
+        let src = r"
         int main() {
             if (1) {
                 return 1;
             }
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         let result = analyze(&ast);
         assert!(result.is_ok(), "{result:?}");
     }
 
     {
-        let src = r#"
+        let src = r"
         int main() {
             int a = 1;
             if (a) {
                 return 1;
             }
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         let result = analyze(&ast);
         assert!(result.is_ok(), "{result:?}");
     }
 
     {
-        let src = r#"
+        let src = r"
         int main() {
             if (a) {
                 return 1;
             }
         }
-        "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        ";
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let ast = program_parser().parse(&tokens).unwrap();
         let result = analyze(&ast);
         assert_eq!(
             result.unwrap_err(),
