@@ -1,15 +1,24 @@
 use chumsky::{
+    error::Simple,
+    extra::Err,
+    input::ValueInput,
     prelude::{just, recursive},
-    select, IterParser, Parser,
+    select,
+    span::SimpleSpan,
+    IterParser, Parser,
 };
 
 use crate::{
-    ast::{BinaryOp, Expr},
+    ast::{ASTBinaryOp, ASTExpr, Span},
     tokens::TokenKind,
 };
 
 #[must_use]
-pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone {
+#[allow(clippy::too_many_lines)]
+pub fn expr_parser<'src, I>() -> impl Parser<'src, I, ASTExpr, Err<Simple<'src, TokenKind>>> + Clone
+where
+    I: ValueInput<'src, Token = TokenKind, Span = SimpleSpan>,
+{
     recursive(|expr| {
         let args = expr
             .clone()
@@ -24,65 +33,107 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
             TokenKind::Ident(name) => name,
         }
         .then(args.clone())
-        .map(|(name, args)| Expr::Call { name, args });
+        .map_with(|(name, args), extra| {
+            let span: SimpleSpan = extra.span();
+            ASTExpr::Call {
+                name,
+                args,
+                span: Span {
+                    start: span.start,
+                    end: span.end,
+                },
+            }
+        });
 
         let primary = call_expr
-            .or(select! {
-                TokenKind::Number(n) => Expr::IntLiteral(n),
-                TokenKind::Ident(name) => Expr::Var(name),
-            })
+            .or(
+                select! { TokenKind::Number(number) => number }.map_with(|number, extra| {
+                    let span: SimpleSpan = extra.span();
+                    ASTExpr::IntLiteral {
+                        value: number,
+                        span: Span {
+                            start: span.start,
+                            end: span.end,
+                        },
+                    }
+                }),
+            )
+            .or(
+                select! { TokenKind::Ident(name) => name }.map_with(|name, extra| {
+                    let span: SimpleSpan = extra.span();
+                    ASTExpr::Var {
+                        name,
+                        span: Span {
+                            start: span.start,
+                            end: span.end,
+                        },
+                    }
+                }),
+            )
             .or(expr.clone().delimited_by(
                 just(TokenKind::LeftParenthesis),
                 just(TokenKind::RightParenthesis),
             ));
 
-        let product = primary.clone().foldl(
+        let product = primary.clone().foldl_with(
             (just(TokenKind::OperatorAsterisk)
-                .to(BinaryOp::Mul)
-                .or(just(TokenKind::OperatorSlash).to(BinaryOp::Div)))
+                .to(ASTBinaryOp::Mul)
+                .or(just(TokenKind::OperatorSlash).to(ASTBinaryOp::Div)))
             .then(primary.clone())
             .repeated(),
-            |lhs, (op, rhs)| Expr::BinaryOp {
-                op,
-                lhs: Box::new(lhs),
-                rhs: Box::new(rhs),
+            |lhs, (op, rhs), extra| {
+                let span: SimpleSpan = extra.span();
+                ASTExpr::BinaryOp {
+                    op,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                    span: Span {
+                        start: span.start,
+                        end: span.end,
+                    },
+                }
             },
         );
 
-        let sum = product.clone().foldl(
+        let sum = product.clone().foldl_with(
             (just(TokenKind::OperatorPlus)
-                .to(BinaryOp::Add)
-                .or(just(TokenKind::OperatorMinus).to(BinaryOp::Sub)))
+                .to(ASTBinaryOp::Add)
+                .or(just(TokenKind::OperatorMinus).to(ASTBinaryOp::Sub)))
             .then(product)
             .repeated(),
-            |lhs, (op, rhs)| Expr::BinaryOp {
-                op,
-                lhs: Box::new(lhs),
-                rhs: Box::new(rhs),
+            |lhs, (op, rhs), extra| {
+                let span: SimpleSpan = extra.span();
+                ASTExpr::BinaryOp {
+                    op,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                    span: Span {
+                        start: span.start,
+                        end: span.end,
+                    },
+                }
             },
         );
 
-        let equality = sum.clone().foldl(
+        let equality = sum.clone().foldl_with(
             just(TokenKind::OperatorEqEq)
-                .to(BinaryOp::Eq)
+                .to(ASTBinaryOp::Eq)
                 .then(sum)
                 .repeated(),
-            |lhs, (op, rhs)| Expr::BinaryOp {
-                op,
-                lhs: Box::new(lhs),
-                rhs: Box::new(rhs),
+            |lhs, (op, rhs), extra| {
+                let span: SimpleSpan = extra.span();
+                ASTExpr::BinaryOp {
+                    op,
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                    span: Span {
+                        start: span.start,
+                        end: span.end,
+                    },
+                }
             },
         );
 
-        select! {
-            TokenKind::Ident(name) => name,
-        }
-        .then_ignore(just(TokenKind::OperatorEq))
-        .then(expr.clone())
-        .map(|(name, value)| Expr::Assign {
-            name,
-            value: Box::new(value),
-        })
-        .or(equality)
+        equality
     })
 }

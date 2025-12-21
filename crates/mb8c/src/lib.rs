@@ -1,16 +1,20 @@
-use chumsky::Parser;
-use codegen::CodeGenerator;
+use codegen::targets::Codegen;
 use error::CompileError;
-use ir::lower_program;
-use logos::Logos;
-use parser::program::program_parser;
+use lower::handlers::Lower;
+use parser::Parser;
+use pipe::CompilePipeline;
+use semantic::analysis::SemanticAnalysis;
 use tokens::TokenKind;
 
 pub mod ast;
 pub mod codegen;
+pub mod config;
 pub mod error;
+pub mod hir;
 pub mod ir;
+pub mod lower;
 pub mod parser;
+pub mod pipe;
 pub mod semantic;
 pub mod tokens;
 
@@ -18,26 +22,18 @@ pub mod tokens;
 ///
 /// # Errors
 /// Returns an error if the input string is not valid MB8C code.
-pub fn compile(input: &str) -> error::CompileResult<()> {
-    let tokens = TokenKind::lexer(input)
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|()| CompileError::InternalError {
-            message: "Unknown error".to_owned(),
-        })?;
-    let parser = program_parser();
-    let ast = parser
-        .parse(&tokens)
-        .into_result()
-        .map_err(|_| CompileError::InternalError {
-            message: "Unknown error".to_owned(),
-        })?;
+///
+/// # Panics
+/// TODO
+pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
+    let result = CompilePipeline::<TokenKind>::init(input.to_owned())?
+        .and_next::<Parser>()?
+        .and_next::<SemanticAnalysis>()?
+        .and_next::<Lower>()?
+        .and_next::<Codegen>()?
+        .finish()?;
 
-    semantic::analyze(&ast)?;
-
-    let ir = lower_program(&ast)?;
-
-    let code = CodeGenerator::new(ir).generate()?;
-    println!("{code}");
+    println!("{result}");
 
     Ok(())
 }
