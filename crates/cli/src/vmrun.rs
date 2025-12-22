@@ -5,7 +5,6 @@ use std::{
 
 use crate::{filesystem::makefs, keyboard::Keyboard};
 use mb8::vm;
-
 use minifb::{Window, WindowOptions};
 
 use crate::tty::Tty;
@@ -18,14 +17,22 @@ pub struct VmRun {
     pub vm: vm::VirtualMachine,
     pub tty: Tty,
     ticks: u32,
+    width: usize,
+    height: usize,
 }
 
 impl VmRun {
     pub fn new(vm: vm::VirtualMachine, tty: Tty) -> Self {
-        Self { vm, tty, ticks: 0 }
+        Self {
+            vm,
+            tty,
+            ticks: 0,
+            width: 320,
+            height: 200,
+        }
     }
 
-    pub fn run_vm(&mut self, kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
+    pub fn run_desktop(&mut self, kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
         let Ok(rom) = std::fs::read(kernel) else {
             return;
         };
@@ -41,7 +48,7 @@ impl VmRun {
 
         makefs(user, &mut self.vm);
 
-        let mut buf = vec![0u32; 320 * 200];
+        let mut buf = vec![0u32; self.width * self.height];
         self.ticks = RENDER_INTERVAL - 1;
         let mut last_render = Instant::now();
         let l_shift = false;

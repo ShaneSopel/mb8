@@ -15,7 +15,7 @@ fn main() {
             let vm = vm::VirtualMachine::default();
             let tty = Tty::new(TTY_COLS as usize, TTY_ROWS as usize, 1024);
             let mut vm_desk = vmrun::VmRun::new(vm, tty);
-            vm_desk.run_vm(kernel, user, cli.seed);
+            vm_desk.run_desktop(kernel, user, cli.seed);
         }
         config::Commands::Compile { source } => {
             let code = match std::fs::read_to_string(source) {
