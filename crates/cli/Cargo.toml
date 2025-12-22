@@ -17,13 +17,9 @@ name = "cli-desktop"
 path = "src/bin/desktop.rs"
 required-features = ["desktop"]
 
-#[[bin]]
-#name = "cli-wasm"
-#path = "src/wasm.rs"
-#required-features = ["wasm"]
-
 [dependencies]
 clap = { version = "4.5.51", features = ["derive"], optional = true }
+ariadne = { version= "0.6.0" } 
 minifb = "0.28.0"
 
 mb8 = { path = "../mb8" }
