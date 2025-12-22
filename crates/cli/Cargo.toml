@@ -18,8 +18,8 @@ path = "src/bin/desktop.rs"
 required-features = ["desktop"]
 
 [dependencies]
-clap = { version = "4.5.51", features = ["derive"], optional = true }
-ariadne = { version= "0.6.0" } 
+ariadne = { version = "0.6.0" }
+clap = { version = "4.5.51", features = ["derive"] }
 minifb = "0.28.0"
 
 mb8 = { path = "../mb8" }

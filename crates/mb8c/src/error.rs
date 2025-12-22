@@ -1,36 +1,48 @@
-use crate::ast::Type;
+use crate::{semantic::types::TypeKind, tokens::TokenKind};
 
 pub type CompileResult<T, E = CompileError> = Result<T, E>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub enum CompileError {
+    #[default]
+    Unknown,
     InternalError {
         message: String,
     },
     UnexpectedToken {
-        line: usize,
-        column: usize,
+        start: usize,
+        end: usize,
     },
-    ParseError {
-        line: usize,
-        column: usize,
-        message: String,
+    ParserError {
+        start: usize,
+        end: usize,
+        found: Option<TokenKind>,
     },
-    DuplicateFunction {
-        name: String,
+    UnknownSymbol {
+        start: usize,
+        end: usize,
+        symbol: String,
     },
-    DuplicateVariable {
-        name: String,
+    DuplicateSymbol {
+        start: usize,
+        end: usize,
+        symbol: String,
     },
     TypeMismatch {
-        expected: Type,
-        found: Type,
+        expected: TypeKind,
+        actual: TypeKind,
+        start: usize,
+        end: usize,
     },
-    UndefinedSymbol {
-        name: String,
+    SymbolIsNotCallable {
+        symbol: String,
+        start: usize,
+        end: usize,
     },
-    InvalidArgumentCount {
+    WrongArgumentsCount {
         expected: usize,
-        found: usize,
+        actual: usize,
+        start: usize,
+        end: usize,
     },
 }

@@ -1,57 +1,61 @@
+#[derive(Clone, Debug, PartialEq)]
+pub struct Span {
+    pub start: usize,
+    pub end: usize,
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Type {
+pub enum ASTType {
     Void,
-    Char,
-    Int,
-}
-
-impl Type {
-    #[must_use]
-    pub fn size_in_bytes(&self) -> u8 {
-        match self {
-            Type::Void => 0,
-            Type::Char => 1,
-            Type::Int => 2,
-        }
-    }
+    Unsigned8,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Program {
-    pub functions: Vec<Function>,
+pub struct ASTProgram {
+    pub functions: Vec<ASTFunction>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Function {
+pub struct ASTFunction {
     pub name: String,
-    pub return_type: Type,
-    pub params: Vec<(String, Type)>,
-    pub body: Stmt,
+    pub return_type: ASTType,
+    pub params: Vec<(String, ASTType)>,
+    pub vars: Vec<(String, ASTType)>,
+    pub body: ASTStmt,
+    pub span: Span,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Stmt {
-    Block(Vec<Stmt>),
-    Declaration {
-        name: String,
-        ty: Type,
-        init: Option<Expr>,
+pub enum ASTStmt {
+    Block(Vec<ASTStmt>),
+    Return {
+        expr: Option<ASTExpr>,
+        span: Span,
     },
-    Return(Option<Expr>),
-    Expression(Expr),
+    Expression {
+        expr: ASTExpr,
+        span: Span,
+    },
     If {
-        condition: Expr,
-        then_branch: Box<Stmt>,
-        else_branch: Option<Box<Stmt>>,
+        condition: ASTExpr,
+        then_branch: Box<ASTStmt>,
+        else_branch: Option<Box<ASTStmt>>,
+        span: Span,
     },
     While {
-        condition: Expr,
-        body: Box<Stmt>,
+        condition: ASTExpr,
+        body: Box<ASTStmt>,
+        span: Span,
+    },
+    Assign {
+        name: String,
+        value: ASTExpr,
+        span: Span,
     },
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum BinaryOp {
+pub enum ASTBinaryOp {
     Add,
     Sub,
     Mul,
@@ -60,21 +64,34 @@ pub enum BinaryOp {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Expr {
-    IntLiteral(i16),
-    BinaryOp {
-        op: BinaryOp,
-        lhs: Box<Expr>,
-        rhs: Box<Expr>,
+pub enum ASTUnaryOp {
+    Neg,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum ASTExpr {
+    IntLiteral {
+        value: u16,
+        span: Span,
     },
-    Negation(Box<Expr>),
-    Var(String),
-    Assign {
+    BinaryOp {
+        op: ASTBinaryOp,
+        lhs: Box<ASTExpr>,
+        rhs: Box<ASTExpr>,
+        span: Span,
+    },
+    UnaryOp {
+        op: ASTUnaryOp,
+        expr: Box<ASTExpr>,
+        span: Span,
+    },
+    Var {
         name: String,
-        value: Box<Expr>,
+        span: Span,
     },
     Call {
         name: String,
-        args: Vec<Expr>,
+        args: Vec<ASTExpr>,
+        span: Span,
     },
 }
