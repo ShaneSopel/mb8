@@ -50,7 +50,7 @@ pub fn run_wasm() -> Result<(), JsValue> {
     )));
     let framebuffer = Rc::new(RefCell::new(vec![0u32; WIDTH * HEIGHT]));
 
-    // Load kernel 
+    // Load kernel
     static KERNEL: &[u8] = include_bytes!("../../../kernel/main.bin");
     {
         let mut vm = vm.borrow_mut();
@@ -69,12 +69,14 @@ pub fn run_wasm() -> Result<(), JsValue> {
     canvas.set_width(WIDTH as u32);
     canvas.set_height(HEIGHT as u32);
     canvas.style().set_property("width", "960px")?;
-        canvas.style().set_property("height", "600px")?;
+    canvas.style().set_property("height", "600px")?;
 
-    canvas.style().set_property("image-rendering", "pixelated")?;
-        canvas.style().set_property("image-rendering", "crisp-edges")?;
-
-
+    canvas
+        .style()
+        .set_property("image-rendering", "pixelated")?;
+    canvas
+        .style()
+        .set_property("image-rendering", "crisp-edges")?;
 
     let ctx: CanvasRenderingContext2d = canvas.get_context("2d")?.unwrap().dyn_into()?;
 
@@ -90,7 +92,7 @@ pub fn run_wasm() -> Result<(), JsValue> {
         keydown.forget();
     }
 
-    // --- Main 
+    // --- Main
     let f: Rc<RefCell<Option<Closure<dyn FnMut()>>>> = Rc::new(RefCell::new(None));
     let g = f.clone();
     let window_loop = window.clone();
