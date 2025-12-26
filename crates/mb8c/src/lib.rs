@@ -1,22 +1,19 @@
 use codegen::targets::Codegen;
 use error::CompileError;
-use lower::handlers::Lower;
+use hir::lower::SemanticAnalysis;
+use ir::lower::Lower;
+use lex::tokens::TokenKind;
 use parser::Parser;
-use pipe::CompilePipeline;
-use semantic::analysis::SemanticAnalysis;
-use tokens::TokenKind;
+use pipeline::CompilePipeline;
 
-pub mod ast;
 pub mod codegen;
 pub mod config;
 pub mod error;
 pub mod hir;
 pub mod ir;
-pub mod lower;
+pub mod lex;
 pub mod parser;
-pub mod pipe;
-pub mod semantic;
-pub mod tokens;
+pub mod pipeline;
 
 /// Compile the input string into an executable program.
 ///

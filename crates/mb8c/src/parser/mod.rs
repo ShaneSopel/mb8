@@ -3,21 +3,22 @@ use chumsky::{
     span::SimpleSpan,
     Parser as ChumskyParser,
 };
-use program::program_parser;
+use parse_program::program_parser;
 
 use crate::{
-    ast::ASTProgram,
     error::{CompileError, CompileResult},
-    pipe::CompilerPipe,
-    tokens::TokenKind,
+    lex::tokens::TokenKind,
+    parser::ast::ASTProgram,
+    pipeline::CompilerPipe,
 };
 
-pub mod expr;
-pub mod function;
-pub mod globals;
-pub mod program;
-pub mod stmt;
-pub mod ty;
+pub mod ast;
+pub mod parse_expr;
+pub mod parse_function;
+pub mod parse_globals;
+pub mod parse_program;
+pub mod parse_stmt;
+pub mod parse_ty;
 
 #[derive(Debug)]
 pub struct Parser {}
