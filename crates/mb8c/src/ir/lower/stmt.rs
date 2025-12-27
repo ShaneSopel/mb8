@@ -1,7 +1,10 @@
 use crate::{
     context::{SymbolId, TypeId},
     error::CompileResult,
-    hir::instructions::{HIRExpr, HIRStmt},
+    hir::{
+        helpers::fetch_expr_type,
+        instructions::{HIRExpr, HIRStmt},
+    },
     ir::{
         bb::{BasicBlockBuilder, BasicBlockTable},
         instructions::{BasicBlock, BasicBlockTerminator, IRInstruction},
@@ -43,15 +46,17 @@ impl IRLowerer {
         mut builder: BasicBlockBuilder,
     ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
         let mut result = Vec::new();
+        let mut width = 0;
         if let Some(expr) = value {
             let instructions = self.lower_expr(expr)?;
+            let type_id = fetch_expr_type(expr);
+            let type_kind = self.ctx.type_table.lookup(type_id).ok_or_else(|| todo!())?;
+            width = type_kind.width() as usize;
             for instruction in instructions {
                 builder.emit(instruction);
             }
         }
-        result.push(builder.build(BasicBlockTerminator::Ret {
-            void: value.is_none(),
-        }));
+        result.push(builder.build(BasicBlockTerminator::Ret { width }));
         Ok((None, result))
     }
 
@@ -132,17 +137,22 @@ impl IRLowerer {
         &mut self,
         condition: &HIRExpr,
         body: &HIRStmt,
-        mut builder: BasicBlockBuilder,
+        builder: BasicBlockBuilder,
         bbs: &mut BasicBlockTable,
     ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
         let mut result = Vec::new();
 
+        let mut cond_block = bbs.bb();
         let body_block = bbs.bb();
         let exit_block = bbs.bb();
 
+        result.push(builder.build(BasicBlockTerminator::Jmp {
+            next: cond_block.id,
+        }));
+
         let instructions = self.lower_expr(condition)?;
         for instruction in instructions {
-            builder.emit(instruction);
+            cond_block.emit(instruction);
         }
 
         let (body_block, body_blocks) = self.lower_stmt(body, body_block, bbs)?;
@@ -151,11 +161,10 @@ impl IRLowerer {
             return Ok((None, result));
         };
         let body_block_id = body_block.id();
-        result.push(body_block.build(BasicBlockTerminator::Branch {
-            then_branch: body_block_id,
-            else_branch: exit_block.id(),
+        result.push(body_block.build(BasicBlockTerminator::Jmp {
+            next: cond_block.id(),
         }));
-        result.push(builder.build(BasicBlockTerminator::Branch {
+        result.push(cond_block.build(BasicBlockTerminator::Branch {
             then_branch: body_block_id,
             else_branch: exit_block.id(),
         }));
