@@ -1,34 +1,36 @@
-use crate::hir::types::TypeKind;
+use crate::context::SymbolId;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IRProgram {
     pub functions: Vec<IRFunction>,
+    pub globals: Vec<SymbolId>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IRFunction {
-    pub name: String,
+    pub id: SymbolId,
     pub basic_blocks: Vec<BasicBlock>,
-    pub size: usize,
+    pub params: Vec<SymbolId>,
+    pub locals: Vec<SymbolId>,
 }
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct VirtualRegister(pub usize);
 
 #[derive(Debug, Clone, Copy)]
 pub struct BasicBlockId(pub usize);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BasicBlock {
     pub id: BasicBlockId,
     pub terminator: BasicBlockTerminator,
     pub instructions: Vec<IRInstruction>,
+    pub successors: Vec<BasicBlockId>,
+    pub predecessors: Vec<BasicBlockId>,
+    pub stack_in: usize,
+    pub stack_out: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BasicBlockTerminator {
     Branch {
-        condition: VirtualRegister,
         then_branch: BasicBlockId,
         else_branch: BasicBlockId,
     },
@@ -36,82 +38,20 @@ pub enum BasicBlockTerminator {
         next: BasicBlockId,
     },
     Ret {
-        value: Option<VirtualRegister>,
+        void: bool,
     },
 }
 
-#[derive(Debug)]
-pub enum Mem {
-    Local { offset: usize },
-    Global { address: usize },
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum IRInstruction {
-    LoadlArg {
-        ty: TypeKind,
-        index: usize,
-        mem: Mem,
-    },
-    StorelArg {
-        register: VirtualRegister,
-        ty: TypeKind,
-        index: usize,
-    },
-    LoadImm {
-        register: VirtualRegister,
-        value: u8,
-        ty: TypeKind,
-    },
-    Store {
-        src: VirtualRegister,
-        mem: Mem,
-        ty: TypeKind,
-    },
-    Load {
-        dst: VirtualRegister,
-        mem: Mem,
-        ty: TypeKind,
-    },
-    Add {
-        dst: VirtualRegister,
-        lhs: VirtualRegister,
-        rhs: VirtualRegister,
-        ty: TypeKind,
-    },
-    Sub {
-        dst: VirtualRegister,
-        lhs: VirtualRegister,
-        rhs: VirtualRegister,
-        ty: TypeKind,
-    },
-    Mul {
-        dst: VirtualRegister,
-        lhs: VirtualRegister,
-        rhs: VirtualRegister,
-        ty: TypeKind,
-    },
-    Div {
-        dst: VirtualRegister,
-        lhs: VirtualRegister,
-        rhs: VirtualRegister,
-        ty: TypeKind,
-    },
-    Cmp {
-        dst: VirtualRegister,
-        lhs: VirtualRegister,
-        rhs: VirtualRegister,
-        ty: TypeKind,
-    },
-    Neg {
-        dst: VirtualRegister,
-        src: VirtualRegister,
-        ty: TypeKind,
-    },
-    Call {
-        result: VirtualRegister,
-        label: String,
-        args: Vec<VirtualRegister>,
-        ty: TypeKind,
-    },
+    LoadImm { value: u16, width: u8 },
+    PushVar { symbol: SymbolId, width: u8 },
+    StoreVar { symbol: SymbolId, width: u8 },
+    Add { width: u8 },
+    Sub { width: u8 },
+    Mul { width: u8 },
+    Div { width: u8 },
+    Eq { width: u8 },
+    Neg { width: u8 },
+    Call { symbol: SymbolId, argc: usize },
 }
