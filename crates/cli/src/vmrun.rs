@@ -7,6 +7,7 @@ use crate::{filesystem::makefs, keyboard::Keyboard};
 use mb8::vm;
 use minifb::{Window, WindowOptions};
 
+use crate::debug::debug_shell;
 use crate::tty::Tty;
 
 const OPS_PER_FRAME: u32 = 1024;
@@ -19,6 +20,7 @@ pub struct VmRun {
     ticks: u32,
     width: usize,
     height: usize,
+    debug_enabled: bool,
 }
 
 impl VmRun {
@@ -30,6 +32,7 @@ impl VmRun {
             ticks: 0,
             width: 320,
             height: 200,
+            debug_enabled: false,
         }
     }
 
@@ -88,6 +91,12 @@ impl VmRun {
             }
 
             self.vm.step();
+
+            if self.debug_enabled && self.vm.debug_break
+            {
+                //run the debug shell.... 
+                debug_shell();
+            }
         }
     }
 }

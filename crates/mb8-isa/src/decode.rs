@@ -45,6 +45,7 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
                 0x0 => Some(Opcode::Nop),
                 0x1 => Some(Opcode::Halt),
                 0x2 => Some(Opcode::Sys),
+                0x3 => Some(Opcode::Debug),
                 _ => None,
             }
         }

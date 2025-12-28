@@ -5,6 +5,7 @@ pub mod filesystem;
 pub mod keyboard;
 pub mod tty;
 pub mod vmrun;
+pub mod debug;
 
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
