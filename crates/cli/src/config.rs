@@ -20,9 +20,9 @@ pub enum Commands {
         /// Path to the user spaace
         user: Vec<PathBuf>,
 
-        /// debug variable 
+        /// debug variable
         #[arg(long)]
-        debug: bool, 
+        debug: bool,
     },
     /// Compile a source file to an executable file
     Compile {

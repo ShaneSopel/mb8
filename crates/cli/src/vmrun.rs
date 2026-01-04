@@ -7,7 +7,7 @@ use crate::{filesystem::makefs, keyboard::Keyboard};
 use mb8::vm;
 use minifb::{Window, WindowOptions};
 
-use crate::debug::debug_shell;
+use crate::debug::{Debug, DebugCmd};
 use crate::tty::Tty;
 
 const OPS_PER_FRAME: u32 = 1024;
@@ -20,18 +20,20 @@ pub struct VmRun {
     ticks: u32,
     width: usize,
     height: usize,
+    debug: Debug,
     pub debug_enabled: bool,
 }
 
 impl VmRun {
     #[must_use]
-    pub fn new(vm: vm::VirtualMachine, tty: Tty) -> Self {
+    pub fn new(vm: vm::VirtualMachine, tty: Tty, debug: Debug) -> Self {
         Self {
             vm,
             tty,
             ticks: 0,
             width: 320,
             height: 200,
+            debug: debug,
             debug_enabled: false,
         }
     }
@@ -62,6 +64,10 @@ impl VmRun {
         while !self.vm.halted && window.is_open() {
             self.ticks = self.ticks.wrapping_add(1);
 
+            if self.run_debug(&window) {
+                continue;
+            }
+
             Keyboard::key_pressed(key, &window, &mut self.vm);
 
             Keyboard::key_released(key, &window);
@@ -85,17 +91,58 @@ impl VmRun {
     }
 
     fn vm_step(&mut self) {
+
+          if self.debug_enabled {
+        if !self.vm.halted {
+            self.vm.step();
+        }
+        return;
+    }
         for _ in 0..OPS_PER_FRAME {
             if self.vm.halted {
                 break;
             }
 
             self.vm.step();
+        }
+    }
 
-            if self.debug_enabled && self.vm.debug_break {
-                //run the debug shell....
-                debug_shell();
+    fn run_debug(&mut self, window: &minifb::Window) -> bool {
+        const USER_ENTRY: u16 = 0x4000;
+
+        if self.debug_enabled && self.vm.program_counter == USER_ENTRY {
+            self.vm.debug_break = true;
+        }
+
+        if !self.debug_enabled || !self.vm.debug_break {
+            return false;
+        }
+        self.debug.render_prompt(&mut self.vm);
+
+        // Wait for a debugger command
+        if let Some(cmd) = self.debug.poll_command(window) {
+            match cmd {
+                DebugCmd::Step => {
+                    // Execute exactly one instruction
+                    self.vm.debug_break = false;
+                    self.vm.step();
+                    self.vm.debug_break = true;
+                }
+
+                DebugCmd::Continue => {
+                    self.vm.debug_break = false;
+                }
+
+                DebugCmd::Registers => {
+                    self.debug.print_registers(&mut self.vm);
+                }
+
+                DebugCmd::Help => {
+                    self.debug.print_help(&mut self.tty);
+                }
             }
         }
+
+        true // stop this frame
     }
 }
