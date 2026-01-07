@@ -45,7 +45,8 @@ impl Debug {
     }
 
     pub fn render_prompt(&mut self, vm: &mut VirtualMachine) {
-        self.tty_write_str(vm, "\nDBG> ");
+        // self.tty_write_str(vm, "\nDBG> ");
+        vm.devices.write(registers::GPU_REG_TTY, b'D');
     }
 
     pub fn debug_shell(&mut self) {}

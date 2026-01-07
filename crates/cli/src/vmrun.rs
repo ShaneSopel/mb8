@@ -4,9 +4,9 @@ use std::{
 };
 
 use crate::{filesystem::makefs, keyboard::Keyboard};
+use mb8::dev::gpu::{self, registers};
 use mb8::vm;
 use minifb::{Window, WindowOptions};
-use mb8::dev::gpu::registers;
 
 use crate::debug::{Debug, DebugCmd};
 use crate::tty::Tty;
@@ -18,6 +18,7 @@ const RENDER_INTERVAL: u32 = 1000;
 pub struct VmRun {
     pub vm: vm::VirtualMachine,
     pub tty: Tty,
+    pub window: Window,
     ticks: u32,
     width: usize,
     height: usize,
@@ -31,9 +32,12 @@ pub struct VmRun {
 impl VmRun {
     #[must_use]
     pub fn new(vm: vm::VirtualMachine, tty: Tty, debug: Debug) -> Self {
+
+        let window =  Window::new("MB8", 640, 480, WindowOptions::default()).expect("Failed to create window");
         Self {
             vm,
             tty,
+            window,
             ticks: 0,
             width: 320,
             height: 200,
@@ -51,10 +55,6 @@ impl VmRun {
         };
         self.vm.load_rom(&rom);
 
-        let Ok(mut window) = Window::new("MB8", 640, 480, WindowOptions::default()) else {
-            return;
-        };
-
         let seed = seed.unwrap_or(1);
 
         self.vm.devices.rand().number = (seed as u8).max(1);
@@ -68,43 +68,60 @@ impl VmRun {
         let r_shift = false;
         let key = &mut Keyboard::new(l_shift, r_shift);
 
-        while !self.vm.halted && window.is_open() {
+        //refactored the while loop to be more minimalized....
+        /*  while !self.vm.halted && window.is_open() {
+         self.ticks = self.ticks.wrapping_add(1);
+
+         //if self.run_debug(&window) {
+         //    continue;
+        // }
+
+
+        let paused = self.run_debug(&window);
+
+        if !paused{
+
+          Keyboard::key_pressed(key, &window, &mut self.vm);
+
+         Keyboard::key_released(key, &window);
+
+         self.vm_step();
+
+        }
+
+         if last_render.elapsed() >= Duration::from_millis(16) {
+             let gpu = self.vm.devices.gpu();
+             for &byte in gpu.tty_buffer() {
+                 self.tty.write_byte(byte);
+             }
+
+             self.tty.render(buf.as_mut_slice(), 320);
+
+            // if window.update_with_buffer(&buf, 320, 200).is_err() {
+                // self.has_rendered = true;
+            //     return;
+            // }
+
+             window.update_with_buffer(&buf, 320, 200).unwrap();
+             last_render = Instant::now();
+
+
+         } */
+
+        while !self.vm.halted && self.window.is_open() {
             self.ticks = self.ticks.wrapping_add(1);
 
-            //if self.run_debug(&window) {
-            //    continue;
-           // }
+            self.render();
 
+            if !self.paused {
+                let paused = self.run_debug();
 
-           let paused = self.run_debug(&window);
-
-           if !paused{
-
-             Keyboard::key_pressed(key, &window, &mut self.vm);
-
-            Keyboard::key_released(key, &window);
-
-            self.vm_step();
-
-           }
-
-            if last_render.elapsed() >= Duration::from_millis(16) {
-                let gpu = self.vm.devices.gpu();
-                for &byte in gpu.tty_buffer() {
-                    self.tty.write_byte(byte);
+                if !paused {
+                   // need to setup keyboard response in debug mode. 
+                    Keyboard::key_pressed(key, &self.window, &mut self.vm);
+                    Keyboard::key_released(key, &self.window);
+                    self.vm_step();
                 }
-
-                self.tty.render(buf.as_mut_slice(), 320);
-
-               // if window.update_with_buffer(&buf, 320, 200).is_err() {
-                   // self.has_rendered = true;
-               //     return;
-               // }
-
-                window.update_with_buffer(&buf, 320, 200).unwrap();
-                last_render = Instant::now();
-
-                
             }
         }
     }
@@ -122,38 +139,44 @@ impl VmRun {
             }
 
             self.vm.step();
+            println!("PC = {:04X}", self.vm.program_counter);
         }
     }
 
-    fn run_debug(&mut self, window: &minifb::Window) -> bool {
+    fn run_debug(&mut self) -> bool {
         const USER_ENTRY: u16 = 0xE100;
+
+        println!("DEBUG: debug_prompt = {}", self.debug_prompt);
 
         if self.debug_enabled && !self.hit_entry_break && self.vm.program_counter == USER_ENTRY {
             self.hit_entry_break = true;
+            //
             self.paused = true;
         }
 
         if !self.paused {
-            return false; 
+            return false;
         }
 
-                println!(
-    "DEBUG CHECK: enabled={}, paused={}, pc={:04X}",
-    self.debug_enabled,
-    self.paused,
-    self.vm.program_counter
-);
+        println!(
+            "DEBUG CHECK: enabled={}, paused={}, pc={:04X}",
+            self.debug_enabled, self.paused, self.vm.program_counter
+        );
 
-self.vm.devices.write(registers::GPU_REG_TTY, b'D');
+        if self.paused && !self.debug_prompt {
+            println!("Writing to GPU TTY");
+            self.print_debug_prompt();
+            self.debug_prompt = true;
 
-        if self.paused && !self.debug_prompt
-        {
-                    self.debug.render_prompt(&mut self.vm);
-                    self.debug_prompt = true;
+            println!("DEBUG: paused = {}", self.paused);
+            println!("DEBUG: debug prompt = {}", self.debug_prompt);
+
         }
+        println!("DEBUG: render = {}", self.paused);
+        //self.render();
 
         // Wait for a debugger command
-        if let Some(cmd) = self.debug.poll_command(window) {
+       /*  if let Some(cmd) = self.debug.poll_command(window) {
             match cmd {
                 DebugCmd::Step => {
                     // Execute exactly one instruction
@@ -172,8 +195,43 @@ self.vm.devices.write(registers::GPU_REG_TTY, b'D');
                     self.debug.print_help(&mut self.tty);
                 }
             }
-        }
+        }*/
 
-        true // stop this frame
+        true 
     }
+
+    fn render(&mut self) {
+        let mut buf = vec![0u32; self.width * self.height];
+        let gpu = self.vm.devices.gpu();
+
+        if !self.paused
+        {
+             //self.tty.load_from_slice(gpu.tty_buffer());
+               for (i, &byte) in gpu.tty_buffer().iter().enumerate() {
+        self.tty.write_byte(byte);
+    }
+        }
+       
+        println!("We are Rendering");
+        self.tty.render(&mut buf, self.width);
+
+        if self.window.update_with_buffer(&buf, 320, 200).is_err() {
+            println!("Error updating window buffer");
+        }
+    }
+
+    //need to fix so its cleaner.... 
+    fn print_debug_prompt(&mut self) {
+    let prompt = "DEBUG MODE\nCommands:\n
+    - Step: Execute one instruction\n
+    - Continue: Resume execution\n
+    - Registers: Display CPU registers\n
+    - Help: Show this message\n";
+
+     let gpu = self.vm.devices.gpu();
+     
+     for byte in prompt.bytes() {
+        self.tty.write_byte(byte); 
+    }
+}
 }
