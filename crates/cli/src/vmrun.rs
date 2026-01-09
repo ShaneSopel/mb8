@@ -23,6 +23,7 @@ pub struct VmRun {
     width: usize,
     height: usize,
     debug: Debug,
+    debug_input: Vec<u8>,
     pub debug_enabled: bool,
     pub hit_entry_break: bool,
     pub paused: bool,
@@ -42,6 +43,7 @@ impl VmRun {
             width: 320,
             height: 200,
             debug: debug,
+            debug_input: Vec::new(),
             debug_enabled: false,
             hit_entry_break: false,
             paused: false,
@@ -108,22 +110,36 @@ impl VmRun {
 
          } */
 
-        while !self.vm.halted && self.window.is_open() {
+       /* while !self.vm.halted && self.window.is_open() {
             self.ticks = self.ticks.wrapping_add(1);
 
             self.render();
 
+            // need to setup keyboard response in debug mode. 
+            Keyboard::key_pressed(key, &self.window, &mut self.vm);
+            Keyboard::key_released(key, &self.window);
             if !self.paused {
                 let paused = self.run_debug();
-
                 if !paused {
-                   // need to setup keyboard response in debug mode. 
-                    Keyboard::key_pressed(key, &self.window, &mut self.vm);
-                    Keyboard::key_released(key, &self.window);
                     self.vm_step();
                 }
             }
         }
+*/
+
+        while !self.vm.halted && self.window.is_open() {
+    self.render();
+
+    self.run_debug();
+
+    if self.paused {
+        self.poll_debug_keys();
+    } else {
+        Keyboard::key_pressed(key, &self.window, &mut self.vm);
+        Keyboard::key_released(key, &self.window);
+        self.vm_step();
+    }
+}
     }
 
     fn vm_step(&mut self) {
@@ -165,7 +181,11 @@ impl VmRun {
 
         if self.paused && !self.debug_prompt {
             println!("Writing to GPU TTY");
-            self.print_debug_prompt();
+            //self.print_debug_prompt();
+
+            self.tty.clear();
+            self.debug.print_help(&mut self.tty);
+        
             self.debug_prompt = true;
 
             println!("DEBUG: paused = {}", self.paused);
@@ -206,7 +226,6 @@ impl VmRun {
 
         if !self.paused
         {
-             //self.tty.load_from_slice(gpu.tty_buffer());
                for (i, &byte) in gpu.tty_buffer().iter().enumerate() {
         self.tty.write_byte(byte);
     }
@@ -220,18 +239,11 @@ impl VmRun {
         }
     }
 
-    //need to fix so its cleaner.... 
-    fn print_debug_prompt(&mut self) {
-    let prompt = "DEBUG MODE\nCommands:\n
-    - Step: Execute one instruction\n
-    - Continue: Resume execution\n
-    - Registers: Display CPU registers\n
-    - Help: Show this message\n";
-
-     let gpu = self.vm.devices.gpu();
-     
-     for byte in prompt.bytes() {
-        self.tty.write_byte(byte); 
+    fn poll_debug_keys(&mut self) {
+        for key in self.window.get_keys_pressed(minifb::KeyRepeat::No) {
+            if let Some(byte) = Debug::map_debug_key(key) {
+                self.debug.handle_debug_byte(byte, &mut self.tty, &mut self.vm, &mut self.debug_input);
+            }
+        }
     }
-}
 }
